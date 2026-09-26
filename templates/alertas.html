@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Alertas | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard alert-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Gestão Escolar</p>
+            <h1>Alertas</h1>
+        </div>
+        <p class="dashboard-context">Acompanhamento de alertas pedagógicos</p>
+    </header>
+
+    <section class="summary-grid" aria-label="Resumo dos alertas">
+        <article class="summary-card">
+            <h2>Total de alertas</h2>
+            <p class="summary-value">{{ summary.total_alerts }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Alertas de frequência</h2>
+            <p class="summary-value">{{ summary.attendance_alerts }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Alertas de desempenho</h2>
+            <p class="summary-value">{{ summary.performance_alerts }}</p>
+        </article>
+        <article class="summary-card summary-card--attention">
+            <h2>Prioridade crítica</h2>
+            <p class="summary-value">{{ summary.high_priority_alerts }}</p>
+        </article>
+    </section>
+
+    <section class="dashboard-section" aria-label="Filtros de alertas">
+        <form class="student-filters alert-filters" method="get" action="{{ url_for('alertas') }}">
+            <div class="filter-field">
+                <label for="category-filter">Categoria</label>
+                <select id="category-filter" name="categoria">
+                    <option value="">Todas as categorias</option>
+                    {% for category in categories %}
+                    <option value="{{ category.category }}" {% if filters.category==category.category %}selected{% endif
+                        %}>
+                        {{ category_labels.get(category.category, category.category) }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="priority-filter">Prioridade</label>
+                <select id="priority-filter" name="prioridade">
+                    <option value="">Todas as prioridades</option>
+                    <option value="info" {% if filters.priority=='info' %}selected{% endif %}>Informativa</option>
+                    <option value="warning" {% if filters.priority=='warning' %}selected{% endif %}>Atenção</option>
+                    <option value="critical" {% if filters.priority=='critical' %}selected{% endif %}>Crítica</option>
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="alert-school-filter">Escola</label>
+                <select id="alert-school-filter" name="escola">
+                    <option value="">Todas as escolas</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
+                        {{ school.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="alert-class-filter">Turma</label>
+                <select id="alert-class-filter" name="turma">
+                    <option value="">Todas as turmas</option>
+                    {% for class in classes %}
+                    <option value="{{ class.id }}" {% if filters.class_id==class.id|string %}selected{% endif %}>
+                        {{ class.name }} · {{ class.school_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="student-name-filter">Nome do aluno</label>
+                <input id="student-name-filter" name="aluno" type="search" value="{{ filters.student_name }}"
+                    placeholder="Buscar aluno">
+            </div>
+            <div class="filter-actions">
+                <button type="submit">Filtrar</button>
+                <a class="filter-reset" href="{{ url_for('alertas') }}">Limpar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="dashboard-section alert-results" aria-labelledby="alerts-table-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Registros</p>
+                <h2 id="alerts-table-title">Lista de alertas</h2>
+            </div>
+            <p class="results-count">{{ alerts|length }} resultado(s)</p>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Aluno</th>
+                        <th scope="col">Escola</th>
+                        <th scope="col">Turma</th>
+                        <th scope="col">Categoria</th>
+                        <th scope="col">Mensagem</th>
+                        <th scope="col">Prioridade</th>
+                        <th scope="col">Data</th>
+                        <th scope="col">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                    <tr>
+                        <td class="student-name">{{ alert.full_name }}</td>
+                        <td>{{ alert.school_name }}</td>
+                        <td>{{ alert.class_name }}</td>
+                        <td><span class="alert-category">{{ alert.category_label }}</span></td>
+                        <td>{{ alert.message }}</td>
+                        <td>
+                            <span class="priority priority--{{ alert.severity }}">{{ alert.priority_label }}</span>
+                        </td>
+                        <td>{{ alert.created_at }}</td>
+                        <td>
+                            <a class="profile-link" href="{{ url_for('aluno_perfil', student_id=alert.student_id) }}">
+                                Ver perfil
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="empty-state">Nenhum alerta encontrado para os filtros selecionados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

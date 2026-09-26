@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Nova comunicação | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard communication-compose-page">
+    <header class="dashboard-header profile-header">
+        <div>
+            <p class="eyebrow">Comunicação</p>
+            <h1>Nova comunicação</h1>
+        </div>
+        <a class="back-link" href="{{ url_for('comunicacao') }}">Voltar para comunicações</a>
+    </header>
+
+    <section class="dashboard-section communication-compose" aria-label="Formulário de comunicação">
+        {% if errors %}
+        <div class="form-errors" role="alert">
+            {% for error in errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('nova_comunicacao') }}">
+            <div class="communication-form-grid">
+                <div class="filter-field">
+                    <label for="communication-direction">Direção</label>
+                    <select id="communication-direction" name="direction" required>
+                        <option value="sent" {% if form_data.direction=='sent' %}selected{% endif %}>Enviada</option>
+                        <option value="received" {% if form_data.direction=='received' %}selected{% endif %}>Recebida
+                        </option>
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label for="communication-type">Tipo</label>
+                    <select id="communication-type" name="message_type" required>
+                        <option value="family" {% if form_data.message_type=='family' %}selected{% endif %}>Família
+                        </option>
+                        <option value="school" {% if form_data.message_type=='school' %}selected{% endif %}>Escola
+                        </option>
+                        <option value="management" {% if form_data.message_type=='management' %}selected{% endif %}>
+                            Gestão</option>
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label for="communication-school">Escola (opcional)</label>
+                    <select id="communication-school" name="school_id">
+                        <option value="">Sem escola específica</option>
+                        {% for school in schools %}
+                        <option value="{{ school.id }}" {% if form_data.school_id==school.id|string %}selected{% endif
+                            %}>
+                            {{ school.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label for="communication-recipient">Destinatário</label>
+                    <input id="communication-recipient" name="recipient" type="text" value="{{ form_data.recipient }}"
+                        maxlength="160" required>
+                </div>
+                <div class="filter-field communication-form-wide">
+                    <label for="communication-subject">Assunto</label>
+                    <input id="communication-subject" name="subject" type="text" value="{{ form_data.subject }}"
+                        maxlength="200" required>
+                </div>
+                <div class="filter-field communication-form-wide">
+                    <label for="communication-message">Mensagem</label>
+                    <textarea id="communication-message" name="message" rows="7"
+                        required>{{ form_data.message }}</textarea>
+                </div>
+            </div>
+            <p class="data-note">Mensagens recebidas iniciam como não lidas; mensagens enviadas são registradas como
+                enviadas.</p>
+            <div class="filter-actions communication-form-actions">
+                <button type="submit">Registrar comunicação</button>
+                <a class="filter-reset" href="{{ url_for('comunicacao') }}">Cancelar</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Comunicação | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard communication-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Gestão Escolar</p>
+            <h1>Comunicação</h1>
+            <p class="dashboard-context">Acompanhe comunicações entre escola, famílias e gestão.</p>
+        </div>
+        <div class="profile-navigation">
+            <a class="back-link" href="{{ url_for('nova_comunicacao') }}">Nova comunicação</a>
+            <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
+        </div>
+    </header>
+
+    <section class="summary-grid" aria-label="Resumo das comunicações">
+        <article class="summary-card">
+            <h2>Total de mensagens</h2>
+            <p class="summary-value">{{ summary.total_messages }}</p>
+        </article>
+        <article class="summary-card summary-card--attention">
+            <h2>Não lidas</h2>
+            <p class="summary-value">{{ summary.unread_messages }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Enviadas</h2>
+            <p class="summary-value">{{ summary.sent_messages }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Recebidas</h2>
+            <p class="summary-value">{{ summary.received_messages }}</p>
+        </article>
+    </section>
+
+    <section class="dashboard-section" aria-label="Filtros de comunicações">
+        <form class="student-filters communication-filters" method="get" action="{{ url_for('comunicacao') }}">
+            <div class="filter-field">
+                <label for="communication-type-filter">Tipo</label>
+                <select id="communication-type-filter" name="tipo">
+                    <option value="">Todos os tipos</option>
+                    {% for option in type_options %}
+                    <option value="{{ option.value }}" {% if filters.message_type==option.value %}selected{% endif %}>
+                        {{ option.label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="communication-status-filter">Status</label>
+                <select id="communication-status-filter" name="status">
+                    <option value="">Todos os status</option>
+                    {% for option in status_options %}
+                    <option value="{{ option.value }}" {% if filters.status==option.value %}selected{% endif %}>
+                        {{ option.label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="communication-school-filter">Escola</label>
+                <select id="communication-school-filter" name="escola">
+                    <option value="">Todas as escolas</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
+                        {{ school.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="communication-date-filter">Data</label>
+                <input id="communication-date-filter" name="data" type="date" value="{{ filters.message_date }}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit">Filtrar</button>
+                <a class="filter-reset" href="{{ url_for('comunicacao') }}">Limpar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="dashboard-section communication-results" aria-labelledby="communications-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Mensagens registradas</p>
+                <h2 id="communications-title">Comunicações</h2>
+            </div>
+            <p class="results-count">{{ messages|length }} mensagem(ns)</p>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Assunto</th>
+                        <th scope="col">Destinatário</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Direção</th>
+                        <th scope="col">Escola</th>
+                        <th scope="col">Data</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for communication in messages %}
+                    <tr>
+                        <td class="student-name">{{ communication.subject }}</td>
+                        <td>{{ communication.recipient }}</td>
+                        <td><span class="alert-category">{{ communication.type_label }}</span></td>
+                        <td>{{ communication.direction_label }}</td>
+                        <td>
+                            {% if communication.school_id %}
+                            <a class="profile-link"
+                                href="{{ url_for('escola_detalhes', school_id=communication.school_id) }}">
+                                {{ communication.school_name }}
+                            </a>
+                            {% else %}<span class="empty-value">Sem escola específica</span>{% endif %}
+                        </td>
+                        <td>{{ communication.created_at }}</td>
+                        <td>
+                            <span class="communication-status communication-status--{{ communication.status }}">
+                                {{ communication.status_label }}
+                            </span>
+                        </td>
+                        <td>
+                            <a class="profile-link"
+                                href="{{ url_for('comunicacao_detalhes', communication_id=communication.id) }}">
+                                Ver mensagem
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="empty-state">Nenhuma comunicação registrada para os filtros selecionados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

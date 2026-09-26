@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Turmas | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard classes-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Gestão Escolar</p>
+            <h1>Turmas</h1>
+        </div>
+        <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
+    </header>
+
+    <section class="summary-grid" aria-label="Resumo das turmas">
+        <article class="summary-card">
+            <h2>Total de turmas</h2>
+            <p class="summary-value">{{ summary.total_classes }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Total de alunos</h2>
+            <p class="summary-value">{{ summary.total_students }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Total de escolas</h2>
+            <p class="summary-value">{{ summary.total_schools }}</p>
+        </article>
+    </section>
+
+    <section class="dashboard-section" aria-label="Filtros de turmas">
+        <form class="student-filters class-filters" method="get" action="{{ url_for('turmas') }}">
+            <div class="filter-field">
+                <label for="class-school-filter">Escola</label>
+                <select id="class-school-filter" name="escola">
+                    <option value="">Todas as escolas</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
+                        {{ school.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="class-name-filter">Nome da turma</label>
+                <input id="class-name-filter" name="nome" type="search" value="{{ filters.class_name }}"
+                    placeholder="Buscar turma">
+            </div>
+            <div class="filter-actions">
+                <button type="submit">Filtrar</button>
+                <a class="filter-reset" href="{{ url_for('turmas') }}">Limpar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="dashboard-section class-results" aria-labelledby="classes-table-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Organização escolar</p>
+                <h2 id="classes-table-title">Lista de turmas</h2>
+            </div>
+            <p class="results-count">{{ classes|length }} turma(s)</p>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Turma</th>
+                        <th scope="col">Escola</th>
+                        <th scope="col">Alunos</th>
+                        <th scope="col">Média de desempenho</th>
+                        <th scope="col">Frequência média</th>
+                        <th scope="col">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for class in classes %}
+                    <tr>
+                        <td class="student-name">{{ class.name }} · {{ class.school_year }}</td>
+                        <td>
+                            <a class="profile-link" href="{{ url_for('escola_detalhes', school_id=class.school_id) }}">
+                                {{ class.school_name }}
+                            </a>
+                        </td>
+                        <td>{{ class.student_count }}</td>
+                        <td>
+                            {% if class.average_grade is not none %}
+                            {{ '%.2f'|format(class.average_grade) }} / 10
+                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if class.average_attendance is not none %}
+                            {{ '%.1f'|format(class.average_attendance) }}%
+                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+                        </td>
+                        <td>
+                            <a class="profile-link" href="{{ url_for('turma_detalhes', class_id=class.id) }}">
+                                Ver turma
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-state">Nenhuma turma encontrada para os filtros selecionados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

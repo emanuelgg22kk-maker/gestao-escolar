@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ communication.subject }} | Comunicação{% endblock %}
+
+{% block content %}
+<div class="dashboard communication-detail-page">
+    <header class="dashboard-header profile-header">
+        <div>
+            <p class="eyebrow">{{ communication.type_label }} · {{ communication.direction_label }}</p>
+            <h1>{{ communication.subject }}</h1>
+            <p class="profile-meta">Destinatário: {{ communication.recipient }}</p>
+        </div>
+        <div class="profile-navigation">
+            <a class="back-link" href="{{ url_for('comunicacao') }}">Voltar para comunicações</a>
+            <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
+        </div>
+    </header>
+
+    <section class="summary-grid communication-detail-summary" aria-label="Dados da comunicação">
+        <article class="summary-card">
+            <h2>Tipo</h2>
+            <p class="planning-detail-value">{{ communication.type_label }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Direção</h2>
+            <p class="planning-detail-value">{{ communication.direction_label }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Escola</h2>
+            <p class="planning-detail-value">
+                {% if communication.school_id %}
+                <a class="profile-link" href="{{ url_for('escola_detalhes', school_id=communication.school_id) }}">
+                    {{ communication.school_name }}
+                </a>
+                {% else %}Sem escola específica{% endif %}
+            </p>
+        </article>
+        <article class="summary-card">
+            <h2>Status</h2>
+            <p class="planning-detail-value">
+                <span class="communication-status communication-status--{{ communication.status }}">
+                    {{ communication.status_label }}
+                </span>
+            </p>
+        </article>
+    </section>
+
+    <section class="dashboard-section communication-message-section" aria-labelledby="message-content-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">{{ communication.created_at }}</p>
+                <h2 id="message-content-title">Mensagem</h2>
+            </div>
+        </div>
+        <div class="communication-message-content">{{ communication.message }}</div>
+        {% if communication.direction == 'received' and communication.status == 'unread' %}
+        <form method="post" action="{{ url_for('marcar_comunicacao_lida', communication_id=communication.id) }}">
+            <div class="filter-actions communication-form-actions">
+                <button type="submit">Marcar como lida</button>
+            </div>
+        </form>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

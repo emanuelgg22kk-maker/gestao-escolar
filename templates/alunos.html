@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Alunos | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard students-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Gestão Escolar</p>
+            <h1>Alunos</h1>
+        </div>
+        <p class="dashboard-context">Consulta e acompanhamento dos alunos</p>
+    </header>
+
+    <section class="summary-grid" aria-label="Resumo dos alunos">
+        <article class="summary-card">
+            <h2>Total de alunos</h2>
+            <p class="summary-value">{{ summary.total_students }}</p>
+        </article>
+        <article class="summary-card summary-card--attention">
+            <h2>Em acompanhamento</h2>
+            <p class="summary-value">{{ summary.attention_students }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Frequência média</h2>
+            <p class="summary-value">
+                {% if summary.average_attendance is not none %}
+                {{ '%.1f'|format(summary.average_attendance) }}<span class="value-unit">%</span>
+                {% else %}
+                <span class="empty-value">Sem dados</span>
+                {% endif %}
+            </p>
+        </article>
+        <article class="summary-card">
+            <h2>Média geral</h2>
+            <p class="summary-value">
+                {% if summary.average_grade is not none %}
+                {{ '%.1f'|format(summary.average_grade) }}<span class="value-unit">/ 10</span>
+                {% else %}
+                <span class="empty-value">Sem dados</span>
+                {% endif %}
+            </p>
+        </article>
+    </section>
+
+    <section class="dashboard-section" aria-label="Busca e filtros de alunos">
+        <form class="student-filters" method="get" action="{{ url_for('alunos') }}">
+            <div class="filter-field">
+                <label for="student-search">Buscar por nome</label>
+                <input id="student-search" name="busca" type="search" value="{{ filters.search }}"
+                    placeholder="Nome do aluno">
+            </div>
+            <div class="filter-field">
+                <label for="school-filter">Escola</label>
+                <select id="school-filter" name="escola">
+                    <option value="">Todas as escolas</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
+                        {{ school.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="class-filter">Turma</label>
+                <select id="class-filter" name="turma">
+                    <option value="">Todas as turmas</option>
+                    {% for class in classes %}
+                    <option value="{{ class.id }}" {% if filters.class_id==class.id|string %}selected{% endif %}>
+                        {{ class.name }} · {{ class.school_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="situation-filter">Situação</label>
+                <select id="situation-filter" name="situacao">
+                    <option value="">Todas as situações</option>
+                    <option value="attention" {% if filters.situation=='attention' %}selected{% endif %}>
+                        Acompanhamento
+                    </option>
+                    <option value="regular" {% if filters.situation=='regular' %}selected{% endif %}>
+                        Regular
+                    </option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button type="submit">Aplicar filtros</button>
+                <a class="filter-reset" href="{{ url_for('alunos') }}">Limpar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="dashboard-section student-results" aria-labelledby="students-table-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Cadastro</p>
+                <h2 id="students-table-title">Lista de alunos</h2>
+            </div>
+            <p class="results-count">{{ students|length }} resultado(s)</p>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Nome</th>
+                        <th scope="col">Escola</th>
+                        <th scope="col">Turma</th>
+                        <th scope="col">Frequência</th>
+                        <th scope="col">Média</th>
+                        <th scope="col">Situação</th>
+                        <th scope="col">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td class="student-name">{{ student.full_name }}</td>
+                        <td>{{ student.school_name }}</td>
+                        <td>{{ student.class_name }}</td>
+                        <td>
+                            {% if student.attendance_rate is not none %}
+                            {{ '%.1f'|format(student.attendance_rate) }}%
+                            {% else %}
+                            <span class="empty-value">Sem dados</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if student.average_grade is not none %}
+                            {{ '%.1f'|format(student.average_grade) }} / 10
+                            {% else %}
+                            <span class="empty-value">Sem dados</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if student.situation == 'attention' %}
+                            <span class="student-status student-status--attention">Acompanhamento</span>
+                            {% else %}
+                            <span class="student-status student-status--regular">Regular</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a class="profile-link" href="{{ url_for('aluno_perfil', student_id=student.id) }}">Ver
+                                perfil</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="empty-state">Nenhum aluno encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.full_name }} | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard profile-page">
+    <header class="dashboard-header profile-header">
+        <div>
+            <p class="eyebrow">Perfil do aluno</p>
+            <h1>{{ student.full_name }}</h1>
+            <p class="profile-meta">
+                {{ student.school_name }} <span>·</span> Turma {{ student.class_name }}
+                <span>·</span> Ano {{ student.school_year }}
+            </p>
+        </div>
+        <div class="profile-navigation">
+            <a class="back-link" href="{{ url_for('alunos') }}">Voltar para alunos</a>
+            <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
+        </div>
+    </header>
+
+    <section class="summary-grid profile-indicators" aria-label="Indicadores do aluno">
+        <article class="summary-card">
+            <h2>Média geral</h2>
+            <p class="summary-value">
+                {% if student.average_grade is not none %}
+                {{ '%.1f'|format(student.average_grade) }}<span class="value-unit">/ 10</span>
+                {% else %}
+                <span class="empty-value">Sem dados</span>
+                {% endif %}
+            </p>
+        </article>
+        <article class="summary-card">
+            <h2>Frequência</h2>
+            <p class="summary-value">
+                {% if student.attendance_rate is not none %}
+                {{ '%.1f'|format(student.attendance_rate) }}<span class="value-unit">%</span>
+                {% else %}
+                <span class="empty-value">Sem dados</span>
+                {% endif %}
+            </p>
+        </article>
+        <article class="summary-card">
+            <h2>Participação média</h2>
+            <p class="summary-value">
+                {% if average_participation is not none %}
+                {{ '%.1f'|format(average_participation) }}<span class="value-unit">/ 10</span>
+                {% else %}
+                <span class="empty-value">Sem dados</span>
+                {% endif %}
+            </p>
+        </article>
+        <article class="summary-card">
+            <h2>Disciplinas</h2>
+            <p class="summary-value">{{ student.subject_count }}</p>
+        </article>
+    </section>
+
+    <div class="profile-grid">
+        <section class="dashboard-section" aria-labelledby="pedagogical-summary-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Síntese</p>
+                    <h2 id="pedagogical-summary-title">Resumo pedagógico</h2>
+                </div>
+                <span
+                    class="student-status {% if student.situation == 'attention' %}student-status--attention{% else %}student-status--regular{% endif %}">
+                    {{ student.situation_label }}
+                </span>
+            </div>
+            <p class="profile-summary-message">{{ pedagogical_message }}</p>
+            <dl class="profile-facts">
+                <div>
+                    <dt>Média geral</dt>
+                    <dd>
+                        {% if student.average_grade is not none %}
+                        {{ '%.1f'|format(student.average_grade) }} / 10
+                        {% else %}Sem dados{% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Frequência</dt>
+                    <dd>
+                        {% if student.attendance_rate is not none %}
+                        {{ '%.1f'|format(student.attendance_rate) }}%
+                        {% else %}Sem dados{% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Participação média</dt>
+                    <dd>
+                        {% if average_participation is not none %}
+                        {{ '%.1f'|format(average_participation) }} / 10
+                        {% else %}Sem dados{% endif %}
+                    </dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="dashboard-section followup-section" aria-labelledby="followup-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Regras objetivas</p>
+                    <h2 id="followup-title">Acompanhamento pedagógico</h2>
+                </div>
+            </div>
+            <p class="followup-message">{{ pedagogical_message }}</p>
+            <ul class="followup-observations">
+                <li>
+                    <span>Frequência abaixo de 75%</span>
+                    <strong>
+                        {% if student.attendance_rate is none %}Sem dados
+                        {% elif student.attendance_rate < 75 %}Sim {% else %}Não{% endif %} </strong>
+                </li>
+                <li>
+                    <span>Média abaixo de 6</span>
+                    <strong>
+                        {% if student.average_grade is none %}Sem dados
+                        {% elif student.average_grade < 6 %}Sim {% else %}Não{% endif %} </strong>
+                </li>
+            </ul>
+        </section>
+    </div>
+
+    <section class="dashboard-section profile-section" aria-labelledby="grades-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Desempenho</p>
+                <h2 id="grades-title">Notas por disciplina</h2>
+            </div>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Disciplina</th>
+                        <th scope="col">Professor</th>
+                        <th scope="col">Avaliação</th>
+                        <th scope="col">Nota</th>
+                        <th scope="col">Situação da nota</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grade in grades %}
+                    <tr>
+                        <td class="student-name">{{ grade.subject_name }}</td>
+                        <td>
+                            {% if grade.teacher_name %}{{ grade.teacher_name }}
+                            {% else %}<span class="empty-value">Não informado</span>{% endif %}
+                        </td>
+                        <td>{{ grade.assessment_name }}</td>
+                        <td>{{ '%.1f'|format(grade.score) }} / 10</td>
+                        <td>
+                            <span
+                                class="grade-status {% if grade.score < 6 %}grade-status--below{% else %}grade-status--reference{% endif %}">
+                                {{ grade.situation_label }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-state">Nenhuma nota registrada.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="dashboard-section profile-section" aria-labelledby="attendance-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Registros</p>
+                <h2 id="attendance-title">Frequência</h2>
+            </div>
+            <p class="attendance-percentage">
+                {% if attendance.attendance_rate is not none %}
+                {{ '%.1f'|format(attendance.attendance_rate) }}%
+                {% else %}Sem dados{% endif %}
+            </p>
+        </div>
+        <div class="attendance-breakdown">
+            <div><span>Total de registros</span><strong>{{ attendance.total_records }}</strong></div>
+            <div><span>Presentes</span><strong>{{ attendance.present_count }}</strong></div>
+            <div><span>Atrasos</span><strong>{{ attendance.late_count }}</strong></div>
+            <div><span>Faltas</span><strong>{{ attendance.absence_count }}</strong></div>
+        </div>
+        <p class="data-note">Atrasos contam como comparecimento; faltas incluem ausências justificadas.</p>
+    </section>
+
+    <section class="dashboard-section profile-section" aria-labelledby="participation-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Atividades</p>
+                <h2 id="participation-title">Participação</h2>
+            </div>
+            <p class="attendance-percentage">
+                {% if average_participation is not none %}
+                Média {{ '%.1f'|format(average_participation) }} / 10
+                {% else %}Sem registros{% endif %}
+            </p>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Atividade</th>
+                        <th scope="col">Disciplina</th>
+                        <th scope="col">Data</th>
+                        <th scope="col">Nota de participação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in participation %}
+                    <tr>
+                        <td class="student-name">{{ record.activity }}</td>
+                        <td>
+                            {% if record.subject_name %}{{ record.subject_name }}
+                            {% else %}<span class="empty-value">Não informado</span>{% endif %}
+                        </td>
+                        <td>{{ record.recorded_on }}</td>
+                        <td>{{ '%.1f'|format(record.score) }} / 10</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="empty-state">Nenhum registro de participação.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="dashboard-section profile-section" aria-labelledby="alerts-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Acompanhamento</p>
+                <h2 id="alerts-title">Alertas</h2>
+            </div>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Categoria</th>
+                        <th scope="col">Mensagem</th>
+                        <th scope="col">Prioridade</th>
+                        <th scope="col">Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                    <tr>
+                        <td class="student-name">{{ alert.category_label }}</td>
+                        <td>{{ alert.message }}</td>
+                        <td>
+                            <span class="priority priority--{{ alert.severity }}">{{ alert.priority_label }}</span>
+                        </td>
+                        <td>{{ alert.created_at }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="empty-state">Nenhum alerta registrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <nav class="profile-bottom-navigation" aria-label="Navegação do perfil">
+        <a class="back-link" href="{{ url_for('alunos') }}">Voltar para alunos</a>
+    </nav>
+</div>
+{% endblock %}

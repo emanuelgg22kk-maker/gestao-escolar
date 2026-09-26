@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Acesso ao sistema | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="login-page">
+    <section class="login-panel" aria-labelledby="login-title">
+        <p class="login-brand">GESTÃO ESCOLAR</p>
+        <p class="eyebrow">Acesso restrito</p>
+        <h1 id="login-title">Acesso ao sistema</h1>
+
+        {% if error %}
+        <p class="login-error" role="alert">{{ error }}</p>
+        {% endif %}
+
+        <form class="login-form" method="post" action="{{ url_for('login') }}">
+            <div class="filter-field">
+                <label for="username">Usuário</label>
+                <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+            </div>
+            <div class="filter-field">
+                <label for="password">Senha</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required>
+            </div>
+            <button class="login-button" type="submit">Entrar</button>
+        </form>
+    </section>
+</div>
+{% endblock %}

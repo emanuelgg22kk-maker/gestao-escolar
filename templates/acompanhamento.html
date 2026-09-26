@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Acompanhamento | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard monitoring-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Gestão Escolar</p>
+            <h1>{{ page_title }}</h1>
+            <p class="dashboard-context">Acompanhe frequência, desempenho e situação pedagógica dos alunos.</p>
+        </div>
+        <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
+    </header>
+
+    <section class="summary-grid monitoring-summary" aria-label="Resumo do acompanhamento">
+        <article class="summary-card">
+            <h2>Alunos analisados</h2>
+            <p class="summary-value">{{ summary.total_students_analyzed }}</p>
+        </article>
+        <article class="summary-card summary-card--attention">
+            <h2>Em acompanhamento</h2>
+            <p class="summary-value">{{ summary.attention_students }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Regulares</h2>
+            <p class="summary-value">{{ summary.regular_students }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Média de desempenho</h2>
+            <p class="summary-value">
+                {% if summary.average_grade is not none %}
+                {{ '%.2f'|format(summary.average_grade) }}<span class="value-unit">/ 10</span>
+                {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+            </p>
+        </article>
+        <article class="summary-card">
+            <h2>Frequência média</h2>
+            <p class="summary-value">
+                {% if summary.average_attendance is not none %}
+                {{ '%.1f'|format(summary.average_attendance) }}<span class="value-unit">%</span>
+                {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+            </p>
+        </article>
+        <article class="summary-card">
+            <h2>Participação média</h2>
+            <p class="summary-value">
+                {% if summary.average_participation is not none %}
+                {{ '%.2f'|format(summary.average_participation) }}<span class="value-unit">/ 10</span>
+                {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+            </p>
+        </article>
+    </section>
+
+    <section class="dashboard-section" aria-label="Filtros de acompanhamento">
+        <form class="student-filters monitoring-filters" method="get" action="{{ form_action }}">
+            <div class="filter-field">
+                <label for="monitoring-school-filter">Escola</label>
+                <select id="monitoring-school-filter" name="escola">
+                    <option value="">Todas as escolas</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
+                        {{ school.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="monitoring-class-filter">Turma</label>
+                <select id="monitoring-class-filter" name="turma">
+                    <option value="">Todas as turmas</option>
+                    {% for class in classes %}
+                    <option value="{{ class.id }}" {% if filters.class_id==class.id|string %}selected{% endif %}>
+                        {{ class.name }} · {{ class.school_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="monitoring-subject-filter">Disciplina</label>
+                <select id="monitoring-subject-filter" name="disciplina">
+                    <option value="">Todas as disciplinas</option>
+                    {% for subject in subjects %}
+                    <option value="{{ subject.id }}" {% if filters.subject_id==subject.id|string %}selected{% endif %}>
+                        {{ subject.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="monitoring-situation-filter">Situação</label>
+                <select id="monitoring-situation-filter" name="situacao">
+                    <option value="">Todas as situações</option>
+                    <option value="attention" {% if filters.situation=='attention' %}selected{% endif %}>
+                        Acompanhamento
+                    </option>
+                    <option value="regular" {% if filters.situation=='regular' %}selected{% endif %}>
+                        Regular
+                    </option>
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="monitoring-student-search">Nome do aluno</label>
+                <input id="monitoring-student-search" name="busca" type="search" value="{{ filters.search }}"
+                    placeholder="Buscar aluno">
+            </div>
+            <div class="filter-actions">
+                <button type="submit">Filtrar</button>
+                <a class="filter-reset" href="{{ form_action }}">Limpar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="dashboard-section monitoring-analysis" aria-labelledby="analysis-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Indicadores do grupo filtrado</p>
+                <h2 id="analysis-title">Análise pedagógica</h2>
+            </div>
+        </div>
+        <div class="analysis-grid">
+            {% for metric in analysis %}
+            <article class="analysis-item analysis-item--{{ metric.style }}">
+                <div class="analysis-item-heading">
+                    <h3>{{ metric.label }}</h3>
+                    <strong>{{ metric.count }}</strong>
+                </div>
+                <div class="analysis-track" role="img"
+                    aria-label="{{ '%.1f'|format(metric.percentage) }} por cento do grupo">
+                    <span style="width: {{ '%.1f'|format(metric.percentage) }}%"></span>
+                </div>
+                <p>{{ '%.1f'|format(metric.percentage) }}% dos alunos analisados</p>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="dashboard-section monitoring-results" aria-labelledby="monitoring-table-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Indicadores individuais</p>
+                <h2 id="monitoring-table-title">Acompanhamento dos alunos</h2>
+            </div>
+            <p class="results-count">{{ students|length }} aluno(s)</p>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Aluno</th>
+                        <th scope="col">Escola</th>
+                        <th scope="col">Turma</th>
+                        <th scope="col">Disciplina</th>
+                        <th scope="col">Média</th>
+                        <th scope="col">Frequência</th>
+                        <th scope="col">Participação</th>
+                        <th scope="col">Situação</th>
+                        <th scope="col">Motivo</th>
+                        <th scope="col">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td class="student-name">{{ student.full_name }}</td>
+                        <td>{{ student.school_name }}</td>
+                        <td>{{ student.class_name }}</td>
+                        <td>
+                            {% if student.subject_names %}
+                            {{ student.subject_names }}
+                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if student.average_grade is not none %}
+                            {{ '%.1f'|format(student.average_grade) }} / 10
+                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if student.attendance_rate is not none %}
+                            {{ '%.1f'|format(student.attendance_rate) }}%
+                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if student.average_participation is not none %}
+                            {{ '%.1f'|format(student.average_participation) }} / 10
+                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+                        </td>
+                        <td>
+                            <span
+                                class="student-status {% if student.situation == 'attention' %}student-status--attention{% else %}student-status--regular{% endif %}">
+                                {{ student.situation_label }}
+                            </span>
+                        </td>
+                        <td><span class="monitoring-reason monitoring-reason--{{ student.reason }}">
+                                {{ student.reason_label }}
+                            </span></td>
+                        <td>
+                            <a class="profile-link" href="{{ url_for('aluno_perfil', student_id=student.id) }}">
+                                Ver perfil
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="empty-state">Nenhum aluno encontrado para os filtros selecionados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="data-note">Frequência: presenças e atrasos contam como comparecimento; ausências justificadas
+            permanecem no total de registros.</p>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Gestão Escolar</p>
+            <h1>Dashboard</h1>
+        </div>
+        <div class="dashboard-header-actions">
+            <p class="dashboard-context">Visão geral da rede escolar</p>
+            <a class="filter-reset dashboard-communication-link" href="{{ url_for('comunicacao') }}">
+                Comunicação
+            </a>
+        </div>
+    </header>
+
+    <section class="summary-grid" aria-label="Indicadores gerais">
+        <article class="summary-card">
+            <h2>Alunos</h2>
+            <p class="summary-value">{{ summary.total_students }}</p>
+            <a class="dashboard-monitoring-link" href="{{ url_for('frequencia_desempenho') }}">
+                Frequência e Desempenho
+            </a>
+        </article>
+        <article class="summary-card">
+            <h2>
+                <a class="summary-card-link" href="{{ url_for('professores') }}">Professores</a>
+            </h2>
+            <p class="summary-value">{{ summary.total_teachers }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Turmas</h2>
+            <p class="summary-value">{{ summary.total_classes }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Escolas</h2>
+            <p class="summary-value">{{ summary.total_schools }}</p>
+            <a class="dashboard-monitoring-link" href="{{ url_for('relatorios') }}">
+                Relatórios
+            </a>
+        </article>
+        <article class="summary-card">
+            <h2>Média geral</h2>
+            <p class="summary-value">
+                {% if summary.average_grade is not none %}
+                {{ '%.1f'|format(summary.average_grade) }}<span class="value-unit">/ 10</span>
+                {% else %}
+                <span class="empty-value">Sem dados</span>
+                {% endif %}
+            </p>
+        </article>
+        <article class="summary-card">
+            <h2>Frequência média</h2>
+            <p class="summary-value">
+                {% if summary.average_attendance is not none %}
+                {{ '%.1f'|format(summary.average_attendance) }}<span class="value-unit">%</span>
+                {% else %}
+                <span class="empty-value">Sem dados</span>
+                {% endif %}
+            </p>
+        </article>
+        <article class="summary-card summary-card--attention">
+            <h2>Alunos em atenção</h2>
+            <p class="summary-value">{{ summary.attention_students }}</p>
+        </article>
+    </section>
+
+    <div class="dashboard-grid dashboard-grid--wide-left">
+        <section class="dashboard-section" aria-labelledby="alerts-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Acompanhamento</p>
+                    <h2 id="alerts-title">Alertas recentes</h2>
+                </div>
+                <a class="filter-reset dashboard-alert-link" href="{{ url_for('alertas') }}">
+                    Ver todos os alertas
+                </a>
+            </div>
+            {% if alerts %}
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Aluno</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col">Descrição</th>
+                            <th scope="col">Prioridade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in alerts %}
+                        <tr>
+                            <td class="student-name">{{ alert.full_name }}</td>
+                            <td>{{ alert.category_label }}</td>
+                            <td>{{ alert.message }}</td>
+                            <td>
+                                <span class="priority priority--{{ alert.severity }}">
+                                    {{ alert.priority_label }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="empty-state">Nenhum alerta registrado.</p>
+            {% endif %}
+        </section>
+
+        <section class="dashboard-section" aria-labelledby="schools-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Rede</p>
+                    <h2 id="schools-title">Visão das escolas</h2>
+                </div>
+                <a class="filter-reset dashboard-school-link" href="{{ url_for('escolas') }}">
+                    Ver todas as escolas
+                </a>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Escola</th>
+                            <th scope="col">Alunos</th>
+                            <th scope="col">Turmas</th>
+                            <th scope="col">Frequência</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for school in schools %}
+                        <tr>
+                            <td class="student-name">{{ school.name }}</td>
+                            <td>{{ school.student_count }}</td>
+                            <td>{{ school.class_count }}</td>
+                            <td>
+                                {% if school.attendance_rate is not none %}
+                                {{ '%.1f'|format(school.attendance_rate) }}%
+                                {% else %}
+                                <span class="empty-value">Sem dados</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="empty-state">Nenhuma escola cadastrada.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div class="dashboard-grid">
+        <section class="dashboard-section" aria-labelledby="performance-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Aprendizagem</p>
+                    <h2 id="performance-title">Desempenho por disciplina</h2>
+                </div>
+                <a class="filter-reset dashboard-planning-link" href="{{ url_for('planejamento') }}">
+                    Planejamento pedagógico
+                </a>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Disciplina</th>
+                            <th scope="col">Média geral</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subject_performance %}
+                        <tr>
+                            <td class="student-name">{{ subject.name }}</td>
+                            <td>
+                                {% if subject.average_grade is not none %}
+                                {{ '%.1f'|format(subject.average_grade) }} / 10
+                                {% else %}
+                                <span class="empty-value">Sem notas</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" class="empty-state">Nenhuma disciplina cadastrada.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="dashboard-section" aria-labelledby="attendance-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Presença</p>
+                    <h2 id="attendance-title">Frequência por turma</h2>
+                </div>
+                <a class="filter-reset dashboard-class-link" href="{{ url_for('turmas') }}">
+                    Ver todas as turmas
+                </a>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Turma</th>
+                            <th scope="col">Escola</th>
+                            <th scope="col">Frequência média</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for class in class_attendance %}
+                        <tr>
+                            <td class="student-name">{{ class.class_name }}</td>
+                            <td>{{ class.school_name }}</td>
+                            <td>
+                                {% if class.attendance_rate is not none %}
+                                {{ '%.1f'|format(class.attendance_rate) }}%
+                                {% else %}
+                                <span class="empty-value">Sem dados</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="empty-state">Nenhuma turma cadastrada.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

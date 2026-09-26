@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Gestão Escolar{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</head>
+
+<body>
+    {% if session.get('logged_in') %}
+    <header class="app-header">
+        <div class="app-header-inner">
+            <a class="app-brand" href="{{ url_for('dashboard') }}">GESTÃO ESCOLAR</a>
+            <nav class="app-nav" aria-label="Navegação principal">
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('alunos') }}">Alunos</a>
+                <a href="{{ url_for('escolas') }}">Escolas</a>
+                <a href="{{ url_for('turmas') }}">Turmas</a>
+                <a href="{{ url_for('professores') }}">Professores</a>
+                <a href="{{ url_for('frequencia_desempenho') }}">Frequência e Desempenho</a>
+                <a href="{{ url_for('planejamento') }}">Planejamento</a>
+                <a href="{{ url_for('alertas') }}">Alertas</a>
+                <a href="{{ url_for('relatorios') }}">Relatórios</a>
+                <a href="{{ url_for('comunicacao') }}">Comunicação</a>
+            </nav>
+            <a class="app-logout" href="{{ url_for('logout') }}">Sair</a>
+        </div>
+    </header>
+    {% endif %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+
+</html>

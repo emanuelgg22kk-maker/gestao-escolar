@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Planejamento Pedagógico | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard planning-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Gestão Escolar</p>
+            <h1>Planejamento Pedagógico</h1>
+        </div>
+        <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
+    </header>
+
+    <section class="summary-grid" aria-label="Resumo dos planejamentos">
+        <article class="summary-card">
+            <h2>Total de planejamentos</h2>
+            <p class="summary-value">{{ summary.total_plans }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Professores envolvidos</h2>
+            <p class="summary-value">{{ summary.total_teachers }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Turmas relacionadas</h2>
+            <p class="summary-value">{{ summary.total_classes }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Disciplinas relacionadas</h2>
+            <p class="summary-value">{{ summary.total_subjects }}</p>
+        </article>
+    </section>
+
+    <section class="dashboard-section" aria-label="Filtros de planejamentos">
+        <form class="student-filters planning-filters" method="get" action="{{ url_for('planejamento') }}">
+            <div class="filter-field">
+                <label for="planning-school-filter">Escola</label>
+                <select id="planning-school-filter" name="escola">
+                    <option value="">Todas as escolas</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
+                        {{ school.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="planning-teacher-filter">Professor</label>
+                <select id="planning-teacher-filter" name="professor">
+                    <option value="">Todos os professores</option>
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}" {% if filters.teacher_id==teacher.id|string %}selected{% endif %}>
+                        {{ teacher.full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="planning-class-filter">Turma</label>
+                <select id="planning-class-filter" name="turma">
+                    <option value="">Todas as turmas</option>
+                    {% for class in classes %}
+                    <option value="{{ class.id }}" {% if filters.class_id==class.id|string %}selected{% endif %}>
+                        {{ class.name }} · {{ class.school_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="planning-subject-filter">Disciplina</label>
+                <select id="planning-subject-filter" name="disciplina">
+                    <option value="">Todas as disciplinas</option>
+                    {% for subject in subjects %}
+                    <option value="{{ subject.id }}" {% if filters.subject_id==subject.id|string %}selected{% endif %}>
+                        {{ subject.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button type="submit">Filtrar</button>
+                <a class="filter-reset" href="{{ url_for('planejamento') }}">Limpar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="dashboard-section planning-results" aria-labelledby="plans-table-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Registros existentes</p>
+                <h2 id="plans-table-title">Planejamentos</h2>
+            </div>
+            <p class="results-count">{{ plans|length }} planejamento(s)</p>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Título</th>
+                        <th scope="col">Professor</th>
+                        <th scope="col">Escola</th>
+                        <th scope="col">Turma</th>
+                        <th scope="col">Disciplina</th>
+                        <th scope="col">Data prevista</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for plan in plans %}
+                    <tr>
+                        <td class="student-name">{{ plan.title }}</td>
+                        <td>
+                            <a class="profile-link"
+                                href="{{ url_for('professor_detalhes', teacher_id=plan.teacher_id) }}">
+                                {{ plan.teacher_name }}
+                            </a>
+                        </td>
+                        <td>
+                            <a class="profile-link" href="{{ url_for('escola_detalhes', school_id=plan.school_id) }}">
+                                {{ plan.school_name }}
+                            </a>
+                        </td>
+                        <td>
+                            <a class="profile-link" href="{{ url_for('turma_detalhes', class_id=plan.class_id) }}">
+                                {{ plan.class_name }} · {{ plan.school_year }}
+                            </a>
+                        </td>
+                        <td>{{ plan.subject_name }}</td>
+                        <td>{{ plan.planned_date }}</td>
+                        <td>
+                            <span class="planning-status planning-status--{{ plan.status }}">
+                                {{ plan.status_label }}
+                            </span>
+                        </td>
+                        <td>
+                            <a class="profile-link" href="{{ url_for('planejamento_detalhes', plan_id=plan.id) }}">
+                                Ver detalhes
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="empty-state">Nenhum planejamento encontrado para os filtros selecionados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

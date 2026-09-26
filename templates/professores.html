@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Professores | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard teachers-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Gestão Escolar</p>
+            <h1>Professores</h1>
+        </div>
+        <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
+    </header>
+
+    <section class="summary-grid" aria-label="Resumo dos professores">
+        <article class="summary-card">
+            <h2>Total de professores</h2>
+            <p class="summary-value">{{ summary.total_teachers }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Total de escolas</h2>
+            <p class="summary-value">{{ summary.total_schools }}</p>
+        </article>
+        <article class="summary-card">
+            <h2>Turmas relacionadas</h2>
+            <p class="summary-value">{{ summary.related_classes }}</p>
+        </article>
+    </section>
+
+    <section class="dashboard-section" aria-label="Filtros de professores">
+        <form class="student-filters teacher-filters" method="get" action="{{ url_for('professores') }}">
+            <div class="filter-field">
+                <label for="teacher-school-filter">Escola</label>
+                <select id="teacher-school-filter" name="escola">
+                    <option value="">Todas as escolas</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
+                        {{ school.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="teacher-name-filter">Nome do professor</label>
+                <input id="teacher-name-filter" name="nome" type="search" value="{{ filters.teacher_name }}"
+                    placeholder="Buscar professor">
+            </div>
+            <div class="filter-actions">
+                <button type="submit">Filtrar</button>
+                <a class="filter-reset" href="{{ url_for('professores') }}">Limpar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="dashboard-section teacher-results" aria-labelledby="teachers-table-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Equipe escolar</p>
+                <h2 id="teachers-table-title">Lista de professores</h2>
+            </div>
+            <p class="results-count">{{ teachers|length }} professor(es)</p>
+        </div>
+        <div class="table-scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Professor</th>
+                        <th scope="col">Escola</th>
+                        <th scope="col">Turmas relacionadas</th>
+                        <th scope="col">Disciplinas</th>
+                        <th scope="col">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teacher in teachers %}
+                    <tr>
+                        <td class="student-name">{{ teacher.full_name }}</td>
+                        <td>
+                            <a class="profile-link"
+                                href="{{ url_for('escola_detalhes', school_id=teacher.school_id) }}">
+                                {{ teacher.school_name }}
+                            </a>
+                        </td>
+                        <td>{{ teacher.class_count }}</td>
+                        <td>
+                            {% if teacher.subjects %}
+                            {% for subject in teacher.subjects %}{{ subject }}{% if not loop.last %}, {% endif %}{%
+                            endfor %}
+                            {% else %}
+                            <span class="empty-value">Sem disciplinas vinculadas</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a class="profile-link" href="{{ url_for('professor_detalhes', teacher_id=teacher.id) }}">
+                                Ver detalhes
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="empty-state">Nenhum professor encontrado para os filtros selecionados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}
