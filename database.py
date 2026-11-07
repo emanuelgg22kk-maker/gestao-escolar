@@ -2,6 +2,7 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
+from werkzeug.security import generate_password_hash
 
 DATABASE_PATH = Path(__file__).resolve().parent / "gestao_escolar.db"
 
@@ -99,20 +100,32 @@ CREATE TABLE IF NOT EXISTS alerts (
     FOREIGN KEY (student_id) REFERENCES students(id)
 );
 
-CREATE TABLE IF NOT EXISTS pedagogical_plans (
+CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY,
-    class_subject_id INTEGER NOT NULL,
-    title TEXT NOT NULL,
-    learning_objective TEXT NOT NULL,
-    planned_date TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'planned'
-        CHECK (status IN ('planned', 'in_progress', 'completed')),
-    FOREIGN KEY (class_subject_id) REFERENCES class_subjects(id)
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (
+        role IN ('admin', 'diretor', 'professor', 'aluno', 'responsavel')
+    ),
+    school_id INTEGER,
+    teacher_id INTEGER,
+    student_id INTEGER,
+    active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE SET NULL,
+    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE SET NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_case_insensitive
+    ON users(lower(username));
 
 CREATE TABLE IF NOT EXISTS communications (
     id INTEGER PRIMARY KEY,
     school_id INTEGER,
+    sender_user_id INTEGER,
+    recipient_user_id INTEGER,
+    recipient_read INTEGER NOT NULL DEFAULT 0 CHECK (recipient_read IN (0, 1)),
     recipient TEXT NOT NULL,
     subject TEXT NOT NULL,
     message TEXT NOT NULL,
@@ -125,7 +138,24 @@ CREATE TABLE IF NOT EXISTS communications (
     CHECK (
         (direction = 'sent' AND status = 'sent')
         OR (direction = 'received' AND status IN ('unread', 'read'))
-    )
+    ),
+    FOREIGN KEY (sender_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (recipient_user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS learning_materials (
+    id INTEGER PRIMARY KEY,
+    class_subject_id INTEGER NOT NULL,
+    teacher_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    media_type TEXT NOT NULL
+        CHECK (media_type IN ('message', 'activity', 'video', 'image', 'audio', 'file')),
+    storage_name TEXT,
+    original_name TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_subject_id) REFERENCES class_subjects(id) ON DELETE CASCADE,
+    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_students_class_id ON students(class_id);
@@ -140,6 +170,8 @@ CREATE INDEX IF NOT EXISTS idx_communications_school_type
     ON communications(school_id, message_type);
 CREATE INDEX IF NOT EXISTS idx_communications_status_date
     ON communications(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_learning_materials_assignment
+    ON learning_materials(class_subject_id, created_at);
 """
 
 
@@ -156,7 +188,532 @@ def initialize_database(database_path=DATABASE_PATH):
     connection = get_connection(database_path)
     try:
         connection.executescript(SCHEMA)
+        connection.execute("DROP TABLE IF EXISTS pedagogical_plans")
+        communication_columns = {
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(communications)")
+        }
+        for column, definition in (
+            ("sender_user_id", "INTEGER REFERENCES users(id) ON DELETE SET NULL"),
+            ("recipient_user_id", "INTEGER REFERENCES users(id) ON DELETE SET NULL"),
+            ("recipient_read", "INTEGER NOT NULL DEFAULT 0"),
+        ):
+            if column not in communication_columns:
+                connection.execute(
+                    "ALTER TABLE communications ADD COLUMN {} {}".format(
+                        column, definition
+                    )
+                )
+        connection.execute(
+            "CREATE INDEX IF NOT EXISTS idx_communications_sender "
+            "ON communications(sender_user_id, recipient_user_id, created_at)"
+        )
+        connection.execute(
+            """
+            INSERT OR IGNORE INTO users (username, password_hash, role)
+            VALUES (?, ?, 'admin')
+            """,
+            ("admin", generate_password_hash("admin123")),
+        )
         connection.commit()
+    finally:
+        connection.close()
+
+
+def get_user_by_username(username):
+    connection = get_connection()
+    try:
+        row = connection.execute(
+            """
+            SELECT users.id, users.username, users.password_hash, users.role,
+                users.school_id, users.teacher_id, users.student_id
+            FROM users
+            WHERE users.username = ? AND users.active = 1
+            """,
+            (username,),
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        connection.close()
+
+
+def get_user_by_id(user_id):
+    connection = get_connection()
+    try:
+        row = connection.execute(
+            """
+            SELECT users.id, users.username, users.role, users.school_id,
+                users.teacher_id, users.student_id
+            FROM users
+            WHERE users.id = ? AND users.active = 1
+            """,
+            (user_id,),
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        connection.close()
+
+
+def create_user(username, password, role, school_id=None, teacher_id=None, student_id=None):
+    if role not in ("admin", "diretor", "professor", "aluno", "responsavel"):
+        raise ValueError("Perfil de usuário inválido.")
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO users (
+                    username, password_hash, role, school_id, teacher_id, student_id
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    username,
+                    generate_password_hash(password),
+                    role,
+                    school_id,
+                    teacher_id,
+                    student_id,
+                ),
+            )
+            return cursor.lastrowid
+    finally:
+        connection.close()
+
+
+def get_management_form_data():
+    connection = get_connection()
+    try:
+        schools = connection.execute(
+            "SELECT id, name, city, state FROM schools ORDER BY name"
+        ).fetchall()
+        classes = connection.execute(
+            """
+            SELECT classes.id, classes.name, classes.school_id,
+                classes.school_year, schools.name AS school_name
+            FROM classes
+            JOIN schools ON schools.id = classes.school_id
+            ORDER BY schools.name, classes.school_year, classes.name
+            """
+        ).fetchall()
+        teachers = connection.execute(
+            """
+            SELECT teachers.id, teachers.full_name, teachers.email, teachers.school_id,
+                schools.name AS school_name
+            FROM teachers
+            JOIN schools ON schools.id = teachers.school_id
+            ORDER BY teachers.full_name
+            """
+        ).fetchall()
+        students = connection.execute(
+            """
+            SELECT students.id, students.full_name, students.enrollment_number,
+                students.birth_date, students.class_id,
+                classes.school_id, schools.name AS school_name
+            FROM students
+            JOIN classes ON classes.id = students.class_id
+            JOIN schools ON schools.id = classes.school_id
+            ORDER BY students.full_name
+            """
+        ).fetchall()
+        subjects = connection.execute(
+            "SELECT id, name FROM subjects ORDER BY name"
+        ).fetchall()
+    finally:
+        connection.close()
+    return {
+        "schools": [dict(row) for row in schools],
+        "classes": [dict(row) for row in classes],
+        "teachers": [dict(row) for row in teachers],
+        "students": [dict(row) for row in students],
+        "subjects": [dict(row) for row in subjects],
+    }
+
+
+def get_users_page_data():
+    connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT users.id, users.username, users.role, users.school_id,
+                users.teacher_id, users.student_id, schools.name AS school_name,
+                COALESCE(teachers.full_name, students.full_name) AS person_name
+            FROM users
+            LEFT JOIN schools ON schools.id = users.school_id
+            LEFT JOIN teachers ON teachers.id = users.teacher_id
+            LEFT JOIN students ON students.id = users.student_id
+            WHERE users.active = 1
+            ORDER BY users.role, users.username
+            """
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
+
+
+def create_school(name, city, state):
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                "INSERT INTO schools (name, city, state) VALUES (?, ?, ?)",
+                (name, city, state),
+            )
+            return cursor.lastrowid
+    finally:
+        connection.close()
+
+
+def create_class(school_id, name, school_year, shift):
+    if shift not in ("morning", "afternoon", "evening"):
+        raise ValueError("Turno inválido.")
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO classes (school_id, name, school_year, shift)
+                VALUES (?, ?, ?, ?)
+                """,
+                (school_id, name, school_year, shift),
+            )
+            return cursor.lastrowid
+    finally:
+        connection.close()
+
+
+def update_school(school_id, name, city, state):
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                "UPDATE schools SET name = ?, city = ?, state = ? WHERE id = ?",
+                (name, city, state, school_id),
+            )
+            return cursor.rowcount > 0
+    finally:
+        connection.close()
+
+
+def create_teacher(school_id, full_name, email):
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO teachers (school_id, full_name, email)
+                VALUES (?, ?, ?)
+                """,
+                (school_id, full_name, email),
+            )
+            return cursor.lastrowid
+    finally:
+        connection.close()
+
+
+def update_teacher(teacher_id, full_name, email, school_id):
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                UPDATE teachers SET full_name = ?, email = ?, school_id = ?
+                WHERE id = ?
+                """,
+                (full_name, email, school_id, teacher_id),
+            )
+            return cursor.rowcount > 0
+    finally:
+        connection.close()
+
+
+def create_student(class_id, full_name, enrollment_number, birth_date):
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO students (class_id, full_name, enrollment_number, birth_date)
+                VALUES (?, ?, ?, ?)
+                """,
+                (class_id, full_name, enrollment_number, birth_date or None),
+            )
+            return cursor.lastrowid
+    finally:
+        connection.close()
+
+
+def update_student(student_id, class_id, full_name, enrollment_number, birth_date):
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                UPDATE students
+                SET class_id = ?, full_name = ?, enrollment_number = ?, birth_date = ?
+                WHERE id = ?
+                """,
+                (class_id, full_name, enrollment_number, birth_date or None, student_id),
+            )
+            return cursor.rowcount > 0
+    finally:
+        connection.close()
+
+
+def get_students_available_for_class(class_id):
+    connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT students.id, students.full_name, students.enrollment_number
+            FROM students
+            JOIN classes AS current_classes
+                ON current_classes.id = students.class_id
+            JOIN classes AS target_class
+                ON target_class.school_id = current_classes.school_id
+            WHERE target_class.id = ? AND students.class_id != target_class.id
+            ORDER BY students.full_name COLLATE NOCASE
+            """,
+            (class_id,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
+
+
+def assign_student_to_class(student_id, class_id):
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                UPDATE students
+                SET class_id = ?
+                WHERE id = ?
+                  AND EXISTS (
+                      SELECT 1
+                      FROM classes AS target_class
+                      JOIN classes AS current_class
+                          ON current_class.school_id = target_class.school_id
+                      WHERE target_class.id = ?
+                        AND current_class.id = students.class_id
+                  )
+                """,
+                (class_id, student_id, class_id),
+            )
+            return cursor.rowcount > 0
+    finally:
+        connection.close()
+
+
+def record_student_attendance(student_id, attendance_date, status, notes=""):
+    if status not in ("present", "absent", "late", "excused"):
+        raise ValueError("Situação de frequência inválida.")
+    connection = get_connection()
+    try:
+        with connection:
+            connection.execute(
+                """
+                INSERT INTO attendance (
+                    student_id, attendance_date, status, notes
+                ) VALUES (?, ?, ?, ?)
+                ON CONFLICT(student_id, attendance_date) DO UPDATE SET
+                    status = excluded.status,
+                    notes = excluded.notes
+                """,
+                (student_id, attendance_date, status, notes or None),
+            )
+        return True
+    finally:
+        connection.close()
+
+
+def record_student_grade(
+    student_id, class_subject_id, assessment_name, score, assessment_date
+):
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO grades (
+                    student_id, class_subject_id, assessment_name, score,
+                    assessment_date
+                )
+                SELECT ?, class_subjects.id, ?, ?, ?
+                FROM class_subjects
+                JOIN students ON students.class_id = class_subjects.class_id
+                WHERE students.id = ? AND class_subjects.id = ?
+                """,
+                (
+                    student_id,
+                    assessment_name,
+                    score,
+                    assessment_date,
+                    student_id,
+                    class_subject_id,
+                ),
+            )
+            return cursor.rowcount > 0
+    finally:
+        connection.close()
+
+
+def save_class_subject(class_id, subject_name, teacher_id):
+    connection = get_connection()
+    try:
+        with connection:
+            connection.execute(
+                "INSERT OR IGNORE INTO subjects (name) VALUES (?)", (subject_name,)
+            )
+            subject_id = connection.execute(
+                "SELECT id FROM subjects WHERE name = ?", (subject_name,)
+            ).fetchone()["id"]
+            connection.execute(
+                """
+                INSERT INTO class_subjects (class_id, subject_id, teacher_id)
+                VALUES (?, ?, ?)
+                ON CONFLICT(class_id, subject_id) DO UPDATE SET teacher_id = excluded.teacher_id
+                """,
+                (class_id, subject_id, teacher_id),
+            )
+            return subject_id
+    finally:
+        connection.close()
+
+
+def update_subject(subject_id, name):
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                "UPDATE subjects SET name = ? WHERE id = ?", (name, subject_id)
+            )
+            return cursor.rowcount > 0
+    finally:
+        connection.close()
+
+
+def get_subject_assignments(user=None):
+    conditions = []
+    values = []
+    if user and user["role"] == "professor":
+        conditions.append("class_subjects.teacher_id = ?")
+        values.append(user["teacher_id"])
+    elif user and user["role"] in ("diretor",):
+        conditions.append("schools.id = ?")
+        values.append(user["school_id"])
+    elif user and user["role"] in ("aluno", "responsavel"):
+        conditions.append("students.id = ?")
+        values.append(user["student_id"])
+    where_clause = "WHERE " + " AND ".join(conditions) if conditions else ""
+    connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT class_subjects.id, class_subjects.class_id, class_subjects.teacher_id,
+                class_subjects.subject_id,
+                classes.name AS class_name, classes.school_year, schools.id AS school_id,
+                schools.name AS school_name, subjects.name AS subject_name,
+                teachers.full_name AS teacher_name
+            FROM class_subjects
+            JOIN classes ON classes.id = class_subjects.class_id
+            JOIN schools ON schools.id = classes.school_id
+            JOIN subjects ON subjects.id = class_subjects.subject_id
+            JOIN teachers ON teachers.id = class_subjects.teacher_id
+            LEFT JOIN students ON students.class_id = classes.id
+            {}
+            GROUP BY class_subjects.id
+            ORDER BY schools.name, classes.name, subjects.name
+            """.format(where_clause),
+            values,
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
+
+
+def get_class_subject_assignment(assignment_id):
+    connection = get_connection()
+    try:
+        row = connection.execute(
+            """
+            SELECT class_subjects.id, class_subjects.class_id,
+                class_subjects.subject_id, class_subjects.teacher_id,
+                classes.school_id
+            FROM class_subjects
+            JOIN classes ON classes.id = class_subjects.class_id
+            WHERE class_subjects.id = ?
+            """,
+            (assignment_id,),
+        ).fetchone()
+        return dict(row) if row else None
+    finally:
+        connection.close()
+
+
+def create_learning_material(
+    class_subject_id, teacher_id, title, description, media_type, storage_name=None,
+    original_name=None,
+):
+    connection = get_connection()
+    try:
+        with connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO learning_materials (
+                    class_subject_id, teacher_id, title, description, media_type,
+                    storage_name, original_name
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    class_subject_id,
+                    teacher_id,
+                    title,
+                    description,
+                    media_type,
+                    storage_name,
+                    original_name,
+                ),
+            )
+            return cursor.lastrowid
+    finally:
+        connection.close()
+
+
+def get_learning_materials(class_subject_id):
+    connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT id, title, description, media_type, storage_name,
+                original_name, created_at
+            FROM learning_materials
+            WHERE class_subject_id = ?
+            ORDER BY created_at DESC, id DESC
+            """,
+            (class_subject_id,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
+
+
+def get_learning_material(material_id):
+    connection = get_connection()
+    try:
+        row = connection.execute(
+            """
+            SELECT learning_materials.id, learning_materials.class_subject_id,
+                learning_materials.storage_name, learning_materials.original_name,
+                class_subjects.teacher_id
+            FROM learning_materials
+            JOIN class_subjects
+                ON class_subjects.id = learning_materials.class_subject_id
+            WHERE learning_materials.id = ?
+            """,
+            (material_id,),
+        ).fetchone()
+        return dict(row) if row else None
     finally:
         connection.close()
 
@@ -432,11 +989,17 @@ def get_students_page_data(search="", school_id="", class_id="", situation=""):
 
 
 def get_student_by_id(student_id):
-    """Busca o nome de um aluno para validar a rota de perfil pendente."""
+    """Busca os vínculos do aluno para validar o acesso ao perfil."""
     connection = get_connection()
     try:
         student = connection.execute(
-            "SELECT id, full_name FROM students WHERE id = ?",
+            """
+            SELECT students.id, students.full_name, students.class_id,
+                classes.school_id
+            FROM students
+            JOIN classes ON classes.id = students.class_id
+            WHERE students.id = ?
+            """,
             (student_id,),
         ).fetchone()
         return dict(student) if student is not None else None
@@ -752,20 +1315,27 @@ def _get_school_rows(connection, school_id=None):
     ).fetchall()
 
 
-def get_schools_page_data():
+def get_schools_page_data(school_id=None):
     """Retorna totais gerais e indicadores calculados para cada escola."""
     connection = get_connection()
     try:
         summary = connection.execute(
             """
             SELECT
-                (SELECT COUNT(*) FROM schools) AS total_schools,
-                (SELECT COUNT(*) FROM students) AS total_students,
-                (SELECT COUNT(*) FROM classes) AS total_classes,
-                (SELECT COUNT(*) FROM teachers) AS total_teachers
-            """
+                (SELECT COUNT(*) FROM schools
+                 WHERE (? IS NULL OR id = ?)) AS total_schools,
+                (SELECT COUNT(*) FROM students
+                 JOIN classes ON classes.id = students.class_id
+                 WHERE (? IS NULL OR classes.school_id = ?)) AS total_students,
+                (SELECT COUNT(*) FROM classes
+                 WHERE (? IS NULL OR school_id = ?)) AS total_classes,
+                (SELECT COUNT(*) FROM teachers
+                 WHERE (? IS NULL OR school_id = ?)) AS total_teachers
+            """,
+            (school_id, school_id, school_id, school_id, school_id, school_id,
+             school_id, school_id),
         ).fetchone()
-        schools = _get_school_rows(connection)
+        schools = _get_school_rows(connection, school_id)
     finally:
         connection.close()
 
@@ -1479,155 +2049,6 @@ def get_reports_page_data(school_id="", class_id=""):
     }
 
 
-_PLANNING_RELATION_FROM = """
-    FROM pedagogical_plans
-    JOIN class_subjects
-        ON class_subjects.id = pedagogical_plans.class_subject_id
-    JOIN teachers ON teachers.id = class_subjects.teacher_id
-    JOIN classes ON classes.id = class_subjects.class_id
-    JOIN schools ON schools.id = classes.school_id
-    JOIN subjects ON subjects.id = class_subjects.subject_id
-"""
-
-
-def get_pedagogical_plans_page_data(
-    school_id="", teacher_id="", class_id="", subject_id=""
-):
-    """Retorna planejamentos existentes e as opções dos filtros."""
-    school_id = _positive_integer(school_id)
-    teacher_id = _positive_integer(teacher_id)
-    class_id = _positive_integer(class_id)
-    subject_id = _positive_integer(subject_id)
-
-    connection = get_connection()
-    try:
-        summary = connection.execute(
-            """
-            SELECT COUNT(*) AS total_plans,
-                COUNT(DISTINCT class_subjects.teacher_id) AS total_teachers,
-                COUNT(DISTINCT class_subjects.class_id) AS total_classes,
-                COUNT(DISTINCT class_subjects.subject_id) AS total_subjects
-            """
-            + _PLANNING_RELATION_FROM
-        ).fetchone()
-
-        plans = connection.execute(
-            """
-            SELECT pedagogical_plans.id, pedagogical_plans.title,
-                pedagogical_plans.learning_objective,
-                pedagogical_plans.planned_date, pedagogical_plans.status,
-                teachers.id AS teacher_id, teachers.full_name AS teacher_name,
-                schools.id AS school_id, schools.name AS school_name,
-                classes.id AS class_id, classes.name AS class_name,
-                classes.school_year,
-                subjects.id AS subject_id, subjects.name AS subject_name
-            """
-            + _PLANNING_RELATION_FROM
-            + """
-            WHERE (? IS NULL OR schools.id = ?)
-              AND (? IS NULL OR teachers.id = ?)
-              AND (? IS NULL OR classes.id = ?)
-              AND (? IS NULL OR subjects.id = ?)
-            ORDER BY pedagogical_plans.planned_date, pedagogical_plans.id
-            """,
-            (
-                school_id,
-                school_id,
-                teacher_id,
-                teacher_id,
-                class_id,
-                class_id,
-                subject_id,
-                subject_id,
-            ),
-        ).fetchall()
-
-        schools = connection.execute(
-            "SELECT id, name FROM schools ORDER BY name"
-        ).fetchall()
-        teachers = connection.execute(
-            "SELECT id, full_name FROM teachers ORDER BY full_name"
-        ).fetchall()
-        classes = connection.execute(
-            """
-            SELECT classes.id, classes.name, schools.name AS school_name
-            FROM classes
-            JOIN schools ON schools.id = classes.school_id
-            ORDER BY schools.name, classes.name
-            """
-        ).fetchall()
-        subjects = connection.execute(
-            "SELECT id, name FROM subjects ORDER BY name"
-        ).fetchall()
-    finally:
-        connection.close()
-
-    status_labels = {
-        "planned": "Planejado",
-        "in_progress": "Em andamento",
-        "completed": "Concluído",
-    }
-    plan_rows = []
-    for row in plans:
-        plan = dict(row)
-        plan["status_label"] = status_labels.get(
-            plan["status"], plan["status"].replace("_", " ").capitalize()
-        )
-        plan_rows.append(plan)
-
-    return {
-        "summary": dict(summary),
-        "plans": plan_rows,
-        "schools": [dict(row) for row in schools],
-        "teachers": [dict(row) for row in teachers],
-        "classes": [dict(row) for row in classes],
-        "subjects": [dict(row) for row in subjects],
-        "filters": {
-            "school_id": str(school_id or ""),
-            "teacher_id": str(teacher_id or ""),
-            "class_id": str(class_id or ""),
-            "subject_id": str(subject_id or ""),
-        },
-    }
-
-
-def get_pedagogical_plan_detail_data(plan_id):
-    """Retorna os campos disponíveis de um planejamento existente."""
-    connection = get_connection()
-    try:
-        plan = connection.execute(
-            """
-            SELECT pedagogical_plans.id, pedagogical_plans.title,
-                pedagogical_plans.learning_objective,
-                pedagogical_plans.planned_date, pedagogical_plans.status,
-                teachers.id AS teacher_id, teachers.full_name AS teacher_name,
-                schools.id AS school_id, schools.name AS school_name,
-                classes.id AS class_id, classes.name AS class_name,
-                classes.school_year,
-                subjects.id AS subject_id, subjects.name AS subject_name
-            """
-            + _PLANNING_RELATION_FROM
-            + "WHERE pedagogical_plans.id = ?",
-            (plan_id,),
-        ).fetchone()
-    finally:
-        connection.close()
-
-    if plan is None:
-        return None
-
-    plan_data = dict(plan)
-    status_labels = {
-        "planned": "Planejado",
-        "in_progress": "Em andamento",
-        "completed": "Concluído",
-    }
-    plan_data["status_label"] = status_labels.get(
-        plan_data["status"], plan_data["status"].replace("_", " ").capitalize()
-    )
-    return {"plan": plan_data}
-
-
 COMMUNICATION_TYPE_LABELS = {
     "family": "Família",
     "school": "Escola",
@@ -1655,8 +2076,31 @@ def get_communication_school_options():
         connection.close()
 
 
+def get_message_recipients(user):
+    connection = get_connection()
+    try:
+        rows = connection.execute(
+            """
+            SELECT users.id, users.username, users.role, users.school_id,
+                COALESCE(teachers.full_name, users.username) AS display_name
+            FROM users
+            LEFT JOIN teachers ON teachers.id = users.teacher_id
+            WHERE users.active = 1
+              AND users.role IN ('diretor', 'professor')
+              AND users.id != ?
+              AND (? = 'admin' OR users.school_id = ?)
+            ORDER BY users.role, display_name
+            """,
+            (user["id"], user["role"], user.get("school_id")),
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        connection.close()
+
+
 def get_communications_page_data(
-    message_type="", status="", school_id="", message_date=""
+    message_type="", status="", school_id="", message_date="",
+    user_id=None, is_admin=False,
 ):
     """Retorna comunicações persistidas e os totais do recorte filtrado."""
     message_type = (message_type or "").strip()
@@ -1674,19 +2118,33 @@ def get_communications_page_data(
 
     filter_sql = """
         WHERE (? = '' OR communications.message_type = ?)
-          AND (? = '' OR communications.status = ?)
+          AND (? = '' OR
+              CASE WHEN communications.recipient_user_id = ?
+                   THEN CASE WHEN communications.recipient_read = 1
+                             THEN 'read' ELSE 'unread' END
+                   ELSE communications.status END = ?)
           AND (? IS NULL OR communications.school_id = ?)
           AND (? = '' OR DATE(communications.created_at) = ?)
+          AND (
+              communications.sender_user_id = ?
+              OR communications.recipient_user_id = ?
+              OR (? = 1 AND communications.sender_user_id IS NULL
+                         AND communications.recipient_user_id IS NULL)
+          )
     """
     filter_values = (
         message_type,
         message_type,
         status,
+        user_id,
         status,
         school_id,
         school_id,
         message_date,
         message_date,
+        user_id,
+        user_id,
+        int(is_admin),
     )
 
     connection = get_connection()
@@ -1695,34 +2153,53 @@ def get_communications_page_data(
             """
             SELECT COUNT(*) AS total_messages,
                 COALESCE(SUM(
-                    CASE WHEN direction = 'received' AND status = 'unread'
+                    CASE WHEN (
+                        (recipient_user_id = ? AND recipient_read = 0)
+                        OR (recipient_user_id IS NULL
+                            AND direction = 'received' AND status = 'unread')
+                    )
                          THEN 1 ELSE 0 END
                 ), 0) AS unread_messages,
-                COALESCE(SUM(CASE WHEN direction = 'sent' THEN 1 ELSE 0 END), 0)
+                COALESCE(SUM(
+                    CASE WHEN sender_user_id = ? OR direction = 'sent'
+                         THEN 1 ELSE 0 END
+                ), 0)
                     AS sent_messages,
-                COALESCE(SUM(CASE WHEN direction = 'received' THEN 1 ELSE 0 END), 0)
+                COALESCE(SUM(
+                    CASE WHEN recipient_user_id = ? OR direction = 'received'
+                         THEN 1 ELSE 0 END
+                ), 0)
                     AS received_messages
             FROM communications
             """
             + filter_sql,
-            filter_values,
+            (user_id, user_id, user_id) + filter_values,
         ).fetchone()
 
         message_rows = connection.execute(
             """
             SELECT communications.id, communications.school_id,
-                communications.recipient, communications.subject,
+                CASE WHEN communications.recipient_user_id = ?
+                     THEN sender.username ELSE communications.recipient END
+                    AS recipient,
                 communications.message, communications.message_type,
-                communications.direction, communications.status,
-                communications.created_at, schools.name AS school_name
+                CASE WHEN communications.recipient_user_id = ?
+                     THEN 'received' ELSE communications.direction END AS direction,
+                CASE WHEN communications.recipient_user_id = ?
+                     THEN CASE WHEN communications.recipient_read = 1
+                               THEN 'read' ELSE 'unread' END
+                     ELSE communications.status END AS status,
+                communications.created_at, schools.name AS school_name,
+                communications.subject
             FROM communications
             LEFT JOIN schools ON schools.id = communications.school_id
+            LEFT JOIN users AS sender ON sender.id = communications.sender_user_id
             """
             + filter_sql
             + """
             ORDER BY communications.created_at DESC, communications.id DESC
             """,
-            filter_values,
+            (user_id, user_id, user_id) + filter_values,
         ).fetchall()
         schools = connection.execute(
             "SELECT id, name FROM schools ORDER BY name"
@@ -1765,6 +2242,37 @@ def get_communications_page_data(
     }
 
 
+def create_direct_message(sender_user_id, recipient_user_id, school_id, subject, message):
+    connection = get_connection()
+    try:
+        with connection:
+            recipient = connection.execute(
+                "SELECT username FROM users WHERE id = ? AND active = 1",
+                (recipient_user_id,),
+            ).fetchone()
+            if recipient is None:
+                raise ValueError("Destinatário inválido.")
+            cursor = connection.execute(
+                """
+                INSERT INTO communications (
+                    school_id, sender_user_id, recipient_user_id, recipient_read,
+                    recipient, subject, message, message_type, direction, status
+                ) VALUES (?, ?, ?, 0, ?, ?, ?, 'management', 'sent', 'sent')
+                """,
+                (
+                    school_id,
+                    sender_user_id,
+                    recipient_user_id,
+                    recipient["username"],
+                    subject,
+                    message,
+                ),
+            )
+            return cursor.lastrowid
+    finally:
+        connection.close()
+
+
 def create_communication(school_id, recipient, subject, message, message_type, direction):
     """Persiste uma comunicação enviada ou recebida pelo formulário."""
     if message_type not in COMMUNICATION_TYPE_LABELS:
@@ -1790,21 +2298,38 @@ def create_communication(school_id, recipient, subject, message, message_type, d
         connection.close()
 
 
-def get_communication_detail_data(communication_id):
+def get_communication_detail_data(communication_id, user_id=None, is_admin=False):
     connection = get_connection()
     try:
         row = connection.execute(
             """
             SELECT communications.id, communications.school_id,
-                communications.recipient, communications.subject,
+                CASE WHEN communications.recipient_user_id = ?
+                     THEN sender.username ELSE communications.recipient END
+                    AS recipient,
+                communications.subject,
                 communications.message, communications.message_type,
-                communications.direction, communications.status,
-                communications.created_at, schools.name AS school_name
+                CASE WHEN communications.recipient_user_id = ?
+                     THEN 'received' ELSE communications.direction END AS direction,
+                CASE WHEN communications.recipient_user_id = ?
+                     THEN CASE WHEN communications.recipient_read = 1
+                               THEN 'read' ELSE 'unread' END
+                     ELSE communications.status END AS status,
+                communications.created_at, schools.name AS school_name,
+                communications.sender_user_id, communications.recipient_user_id,
+                sender.username AS sender_username
             FROM communications
             LEFT JOIN schools ON schools.id = communications.school_id
+            LEFT JOIN users AS sender ON sender.id = communications.sender_user_id
             WHERE communications.id = ?
+              AND (
+                  communications.sender_user_id = ?
+                  OR communications.recipient_user_id = ?
+                  OR (? = 1 AND communications.sender_user_id IS NULL
+                             AND communications.recipient_user_id IS NULL)
+              )
             """,
-            (communication_id,),
+            (user_id, user_id, user_id, communication_id, user_id, user_id, int(is_admin)),
         ).fetchone()
     finally:
         connection.close()
@@ -1825,15 +2350,30 @@ def get_communication_detail_data(communication_id):
     return {"communication": communication}
 
 
-def mark_communication_read(communication_id):
+def mark_communication_read(communication_id, user_id=None, is_admin=False):
     connection = get_connection()
     try:
         with connection:
             row = connection.execute(
-                "SELECT direction, status FROM communications WHERE id = ?",
+                """
+                SELECT direction, status, sender_user_id, recipient_user_id,
+                    recipient_read
+                FROM communications WHERE id = ?
+                """,
                 (communication_id,),
             ).fetchone()
             if row is None:
+                return False
+            if row["recipient_user_id"] is not None:
+                if row["recipient_user_id"] != user_id:
+                    return False
+                if not row["recipient_read"]:
+                    connection.execute(
+                        "UPDATE communications SET recipient_read = 1 WHERE id = ?",
+                        (communication_id,),
+                    )
+                return True
+            if not is_admin:
                 return False
             if row["direction"] == "received" and row["status"] == "unread":
                 connection.execute(

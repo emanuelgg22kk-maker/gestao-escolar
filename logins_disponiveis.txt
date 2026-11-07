@@ -1,0 +1,10 @@
+LOGINS CADASTRADOS - GESTAO ESCOLAR
+Atualizado em: 2026-11-07T14:55:22-03:00
+Este arquivo lista usuarios e perfis. Senhas nao sao exibidas.
+
+Usuario | Tipo de usuario
+--------|----------------
+admin | Administrador
+estudante.teste | Aluno
+professor jubileu fictício | Professor
+professor.teste | Professor

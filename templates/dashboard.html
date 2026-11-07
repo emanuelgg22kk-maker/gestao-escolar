@@ -1,243 +1,1146 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard | Gestão Escolar{% endblock %}
+{% block title %}Dashboard | Gestão Educacional{% endblock %}
 
 {% block content %}
+
 <div class="dashboard">
-    <header class="dashboard-header">
-        <div>
-            <p class="eyebrow">Gestão Escolar</p>
-            <h1>Dashboard</h1>
+
+    <!-- =========================================================
+         CABEÇALHO INSTITUCIONAL
+    ========================================================== -->
+    <header class="dashboard-header dashboard-header--municipal">
+
+        <div class="dashboard-branding">
+
+            <div class="municipal-mark">
+                <span class="municipal-mark__top">LAGOA DO</span>
+                <strong>CARRO</strong>
+                <span class="municipal-mark__bottom">PERNAMBUCO</span>
+            </div>
+
+            <div class="dashboard-heading-content">
+
+                <p class="eyebrow">
+                    Secretaria Municipal de Educação
+                </p>
+
+                <h1>
+                    Gestão Educacional
+                </h1>
+
+                <p class="dashboard-subtitle">
+                    Visão geral dos indicadores educacionais da rede municipal
+                    de Lagoa do Carro
+                </p>
+
+            </div>
+
         </div>
+
+
         <div class="dashboard-header-actions">
-            <p class="dashboard-context">Visão geral da rede escolar</p>
-            <a class="filter-reset dashboard-communication-link" href="{{ url_for('comunicacao') }}">
+
+            <div class="dashboard-status">
+                <span class="dashboard-status__dot"></span>
+
+                <div>
+                    <strong>Rede monitorada</strong>
+                    <span>Dados consolidados</span>
+                </div>
+            </div>
+
+            <a class="dashboard-primary-action"
+               href="{{ url_for('comunicacao') }}">
                 Comunicação
             </a>
+
         </div>
+
     </header>
 
-    <section class="summary-grid" aria-label="Indicadores gerais">
-        <article class="summary-card">
-            <h2>Alunos</h2>
-            <p class="summary-value">{{ summary.total_students }}</p>
-            <a class="dashboard-monitoring-link" href="{{ url_for('frequencia_desempenho') }}">
-                Frequência e Desempenho
-            </a>
-        </article>
-        <article class="summary-card">
-            <h2>
-                <a class="summary-card-link" href="{{ url_for('professores') }}">Professores</a>
-            </h2>
-            <p class="summary-value">{{ summary.total_teachers }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Turmas</h2>
-            <p class="summary-value">{{ summary.total_classes }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Escolas</h2>
-            <p class="summary-value">{{ summary.total_schools }}</p>
-            <a class="dashboard-monitoring-link" href="{{ url_for('relatorios') }}">
-                Relatórios
-            </a>
-        </article>
-        <article class="summary-card">
-            <h2>Média geral</h2>
-            <p class="summary-value">
-                {% if summary.average_grade is not none %}
-                {{ '%.1f'|format(summary.average_grade) }}<span class="value-unit">/ 10</span>
-                {% else %}
-                <span class="empty-value">Sem dados</span>
-                {% endif %}
-            </p>
-        </article>
-        <article class="summary-card">
-            <h2>Frequência média</h2>
-            <p class="summary-value">
-                {% if summary.average_attendance is not none %}
-                {{ '%.1f'|format(summary.average_attendance) }}<span class="value-unit">%</span>
-                {% else %}
-                <span class="empty-value">Sem dados</span>
-                {% endif %}
-            </p>
-        </article>
-        <article class="summary-card summary-card--attention">
-            <h2>Alunos em atenção</h2>
-            <p class="summary-value">{{ summary.attention_students }}</p>
-        </article>
+
+    <!-- =========================================================
+         VISÃO EXECUTIVA
+    ========================================================== -->
+    <section class="dashboard-section dashboard-section--metrics"
+             aria-labelledby="metrics-title">
+
+        <div class="section-heading section-heading--dashboard">
+
+            <div>
+                <p class="eyebrow">
+                    Visão executiva
+                </p>
+
+                <h2 id="metrics-title">
+                    Panorama da rede municipal
+                </h2>
+
+                <p class="section-description">
+                    Indicadores gerais para acompanhamento da educação municipal.
+                </p>
+            </div>
+
+            <span class="section-context">
+                Dados consolidados
+            </span>
+
+        </div>
+
+
+        <div class="summary-grid dashboard-metrics">
+
+            <!-- ALUNOS -->
+            <article class="summary-card dashboard-metric-card dashboard-metric-card--students">
+
+                <div class="metric-card-top">
+
+                    <div class="metric-icon">
+                        <span>AL</span>
+                    </div>
+
+                    <span class="metric-label">
+                        Alunos
+                    </span>
+
+                </div>
+
+                <p class="summary-value">
+                    {{ summary.total_students }}
+                </p>
+
+                <span class="metric-description">
+                    Estudantes cadastrados na rede
+                </span>
+
+                <a href="{{ url_for('alunos') }}"
+                   class="metric-link">
+                    Ver alunos
+                    <span>→</span>
+                </a>
+
+            </article>
+
+
+            <!-- ESCOLAS -->
+            <article class="summary-card dashboard-metric-card dashboard-metric-card--schools">
+
+                <div class="metric-card-top">
+
+                    <div class="metric-icon">
+                        <span>ES</span>
+                    </div>
+
+                    <span class="metric-label">
+                        Escolas
+                    </span>
+
+                </div>
+
+                <p class="summary-value">
+                    {{ summary.total_schools }}
+                </p>
+
+                <span class="metric-description">
+                    Unidades da rede municipal
+                </span>
+
+                <a href="{{ url_for('escolas') }}"
+                   class="metric-link">
+                    Ver escolas
+                    <span>→</span>
+                </a>
+
+            </article>
+
+
+            <!-- PROFESSORES -->
+            <article class="summary-card dashboard-metric-card dashboard-metric-card--teachers">
+
+                <div class="metric-card-top">
+
+                    <div class="metric-icon">
+                        <span>PR</span>
+                    </div>
+
+                    <span class="metric-label">
+                        Professores
+                    </span>
+
+                </div>
+
+                <p class="summary-value">
+                    {{ summary.total_teachers }}
+                </p>
+
+                <span class="metric-description">
+                    Profissionais cadastrados
+                </span>
+
+                <a href="{{ url_for('professores') }}"
+                   class="metric-link">
+                    Ver professores
+                    <span>→</span>
+                </a>
+
+            </article>
+
+
+            <!-- TURMAS -->
+            <article class="summary-card dashboard-metric-card dashboard-metric-card--classes">
+
+                <div class="metric-card-top">
+
+                    <div class="metric-icon">
+                        <span>TR</span>
+                    </div>
+
+                    <span class="metric-label">
+                        Turmas
+                    </span>
+
+                </div>
+
+                <p class="summary-value">
+                    {{ summary.total_classes }}
+                </p>
+
+                <span class="metric-description">
+                    Turmas ativas na rede
+                </span>
+
+                <a href="{{ url_for('turmas') }}"
+                   class="metric-link">
+                    Ver turmas
+                    <span>→</span>
+                </a>
+
+            </article>
+
+
+            <!-- FREQUÊNCIA -->
+            <article class="summary-card dashboard-metric-card dashboard-metric-card--attendance">
+
+                <div class="metric-card-top">
+
+                    <div class="metric-icon">
+                        <span>FR</span>
+                    </div>
+
+                    <span class="metric-label">
+                        Frequência média
+                    </span>
+
+                </div>
+
+                <p class="summary-value">
+
+                    {% if summary.average_attendance is not none %}
+
+                        {{ '%.1f'|format(summary.average_attendance) }}
+
+                        <span class="value-unit">
+                            %
+                        </span>
+
+                    {% else %}
+
+                        <span class="empty-value">
+                            Sem dados
+                        </span>
+
+                    {% endif %}
+
+                </p>
+
+                <span class="metric-description">
+                    Presença média dos estudantes
+                </span>
+
+                <a href="{{ url_for('frequencia_desempenho') }}"
+                   class="metric-link">
+                    Analisar frequência
+                    <span>→</span>
+                </a>
+
+            </article>
+
+
+            <!-- DESEMPENHO -->
+            <article class="summary-card dashboard-metric-card dashboard-metric-card--performance">
+
+                <div class="metric-card-top">
+
+                    <div class="metric-icon">
+                        <span>DE</span>
+                    </div>
+
+                    <span class="metric-label">
+                        Desempenho médio
+                    </span>
+
+                </div>
+
+                <p class="summary-value">
+
+                    {% if summary.average_grade is not none %}
+
+                        {{ '%.1f'|format(summary.average_grade) }}
+
+                        <span class="value-unit">
+                            / 10
+                        </span>
+
+                    {% else %}
+
+                        <span class="empty-value">
+                            Sem dados
+                        </span>
+
+                    {% endif %}
+
+                </p>
+
+                <span class="metric-description">
+                    Média geral registrada
+                </span>
+
+                <a href="{{ url_for('frequencia_desempenho') }}"
+                   class="metric-link">
+                    Ver desempenho
+                    <span>→</span>
+                </a>
+
+            </article>
+
+
+            <!-- ACOMPANHAMENTO -->
+            <article class="summary-card dashboard-metric-card dashboard-metric-card--attention">
+
+                <div class="metric-card-top">
+
+                    <div class="metric-icon">
+                        <span>AT</span>
+                    </div>
+
+                    <span class="metric-label">
+                        Em acompanhamento
+                    </span>
+
+                </div>
+
+                <p class="summary-value">
+                    {{ summary.attention_students }}
+                </p>
+
+                <span class="metric-description">
+                    Estudantes que precisam de atenção
+                </span>
+
+                <a href="{{ url_for('acompanhamento') }}"
+                   class="metric-link">
+                    Ver acompanhamento
+                    <span>→</span>
+                </a>
+
+            </article>
+
+
+            <!-- ALERTAS -->
+            <article class="summary-card dashboard-metric-card dashboard-metric-card--alerts">
+
+                <div class="metric-card-top">
+
+                    <div class="metric-icon">
+                        <span>AL</span>
+                    </div>
+
+                    <span class="metric-label">
+                        Alertas recentes
+                    </span>
+
+                </div>
+
+                <p class="summary-value">
+                    {{ alerts|length }}
+                </p>
+
+                <span class="metric-description">
+                    Situações registradas recentemente
+                </span>
+
+                <a href="{{ url_for('alertas') }}"
+                   class="metric-link">
+                    Ver alertas
+                    <span>→</span>
+                </a>
+
+            </article>
+
+        </div>
+
     </section>
 
+
+    <!-- =========================================================
+         DESTAQUE INSTITUCIONAL
+    ========================================================== -->
+    <section class="municipal-highlight">
+
+        <div class="municipal-highlight__content">
+
+            <span class="municipal-highlight__tag">
+                LAGOA DO CARRO • EDUCAÇÃO
+            </span>
+
+            <h2>
+                Uma visão integrada
+                da educação municipal.
+            </h2>
+
+            <p>
+                Centralize informações de alunos, escolas, turmas,
+                professores, frequência, desempenho e acompanhamento
+                pedagógico em um único ambiente.
+            </p>
+
+        </div>
+
+
+        <div class="municipal-highlight__stats">
+
+            <div class="municipal-highlight__stat">
+
+                <strong>
+                    {{ summary.total_schools }}
+                </strong>
+
+                <span>
+                    Escolas
+                </span>
+
+            </div>
+
+
+            <div class="municipal-highlight__stat">
+
+                <strong>
+                    {{ summary.total_classes }}
+                </strong>
+
+                <span>
+                    Turmas
+                </span>
+
+            </div>
+
+
+            <div class="municipal-highlight__stat">
+
+                <strong>
+                    {{ summary.total_students }}
+                </strong>
+
+                <span>
+                    Alunos
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         ACOMPANHAMENTO PRIORITÁRIO + ESCOLAS
+    ========================================================== -->
     <div class="dashboard-grid dashboard-grid--wide-left">
-        <section class="dashboard-section" aria-labelledby="alerts-title">
+
+
+        <!-- ALERTAS -->
+        <section class="dashboard-section dashboard-section--priority"
+                 aria-labelledby="alerts-title">
+
             <div class="section-heading">
+
                 <div>
-                    <p class="eyebrow">Acompanhamento</p>
-                    <h2 id="alerts-title">Alertas recentes</h2>
+
+                    <p class="eyebrow">
+                        Monitoramento
+                    </p>
+
+                    <h2 id="alerts-title">
+                        Situações que merecem atenção
+                    </h2>
+
+                    <p class="section-description">
+                        Ocorrências recentes identificadas no acompanhamento
+                        dos estudantes.
+                    </p>
+
                 </div>
-                <a class="filter-reset dashboard-alert-link" href="{{ url_for('alertas') }}">
-                    Ver todos os alertas
+
+                <a class="filter-reset"
+                   href="{{ url_for('alertas') }}">
+                    Ver todos
+                    <span>→</span>
                 </a>
+
             </div>
+
+
             {% if alerts %}
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Aluno</th>
-                            <th scope="col">Tipo</th>
-                            <th scope="col">Descrição</th>
-                            <th scope="col">Prioridade</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for alert in alerts %}
-                        <tr>
-                            <td class="student-name">{{ alert.full_name }}</td>
-                            <td>{{ alert.category_label }}</td>
-                            <td>{{ alert.message }}</td>
-                            <td>
-                                <span class="priority priority--{{ alert.severity }}">
-                                    {{ alert.priority_label }}
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+            <div class="priority-list">
+
+                {% for alert in alerts %}
+
+                <a class="priority-item"
+                   href="{{ url_for('alertas') }}">
+
+                    <div class="priority-item__indicator
+                        priority-item__indicator--{{ alert.severity }}">
+                    </div>
+
+
+                    <div class="priority-item__content">
+
+                        <div class="priority-item__title-row">
+
+                            <strong>
+                                {{ alert.full_name }}
+                            </strong>
+
+                            <span class="priority-badge priority-badge--{{ alert.severity }}">
+                                {{ alert.priority_label }}
+                            </span>
+
+                        </div>
+
+                        <span>
+                            {{ alert.category_label }}
+                        </span>
+
+                        <p>
+                            {{ alert.message }}
+                        </p>
+
+                    </div>
+
+                </a>
+
+                {% endfor %}
+
             </div>
+
             {% else %}
-            <p class="empty-state">Nenhum alerta registrado.</p>
+
+            <div class="empty-state empty-state--dashboard">
+
+                <strong>
+                    Nenhuma situação de atenção registrada.
+                </strong>
+
+                <span>
+                    A rede não possui alertas recentes para exibição.
+                </span>
+
+            </div>
+
             {% endif %}
+
         </section>
 
-        <section class="dashboard-section" aria-labelledby="schools-title">
+
+        <!-- ESCOLAS -->
+        <section class="dashboard-section"
+                 aria-labelledby="schools-title">
+
             <div class="section-heading">
+
                 <div>
-                    <p class="eyebrow">Rede</p>
-                    <h2 id="schools-title">Visão das escolas</h2>
+
+                    <p class="eyebrow">
+                        Rede municipal
+                    </p>
+
+                    <h2 id="schools-title">
+                        Acompanhamento das escolas
+                    </h2>
+
+                    <p class="section-description">
+                        Frequência média registrada por unidade.
+                    </p>
+
                 </div>
-                <a class="filter-reset dashboard-school-link" href="{{ url_for('escolas') }}">
-                    Ver todas as escolas
+
+                <a class="filter-reset"
+                   href="{{ url_for('escolas') }}">
+                    Ver todas
+                    <span>→</span>
                 </a>
+
             </div>
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Escola</th>
-                            <th scope="col">Alunos</th>
-                            <th scope="col">Turmas</th>
-                            <th scope="col">Frequência</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for school in schools %}
-                        <tr>
-                            <td class="student-name">{{ school.name }}</td>
-                            <td>{{ school.student_count }}</td>
-                            <td>{{ school.class_count }}</td>
-                            <td>
-                                {% if school.attendance_rate is not none %}
+
+
+            <div class="school-performance-list">
+
+                {% for school in schools %}
+
+                <div class="school-performance-item">
+
+                    <div class="school-performance-header">
+
+                        <div>
+
+                            <strong>
+                                {{ school.name }}
+                            </strong>
+
+                            <span class="school-location-label">
+                                Rede Municipal
+                            </span>
+
+                        </div>
+
+                        <strong>
+
+                            {% if school.attendance_rate is not none %}
+
                                 {{ '%.1f'|format(school.attendance_rate) }}%
-                                {% else %}
-                                <span class="empty-value">Sem dados</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="4" class="empty-state">Nenhuma escola cadastrada.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+                            {% else %}
+
+                                —
+
+                            {% endif %}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="school-progress">
+
+                        <div class="school-progress__bar"
+
+                             {% if school.attendance_rate is not none %}
+
+                             style="width: {{ [school.attendance_rate, 100]|min }}%;"
+
+                             {% else %}
+
+                             style="width: 0%;"
+
+                             {% endif %}>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="school-performance-meta">
+
+                        <span>
+                            {{ school.student_count }} alunos
+                        </span>
+
+                        <span>
+                            {{ school.class_count }} turmas
+                        </span>
+
+                    </div>
+
+                </div>
+
+                {% else %}
+
+                <div class="empty-state">
+                    Nenhuma escola cadastrada.
+                </div>
+
+                {% endfor %}
+
             </div>
+
         </section>
+
     </div>
 
+
+    <!-- =========================================================
+         APRENDIZAGEM + FREQUÊNCIA
+    ========================================================== -->
     <div class="dashboard-grid">
-        <section class="dashboard-section" aria-labelledby="performance-title">
+
+
+        <!-- DESEMPENHO POR DISCIPLINA -->
+        <section class="dashboard-section"
+                 aria-labelledby="performance-title">
+
             <div class="section-heading">
+
                 <div>
-                    <p class="eyebrow">Aprendizagem</p>
-                    <h2 id="performance-title">Desempenho por disciplina</h2>
+
+                    <p class="eyebrow">
+                        Aprendizagem
+                    </p>
+
+                    <h2 id="performance-title">
+                        Desempenho por disciplina
+                    </h2>
+
+                    <p class="section-description">
+                        Médias registradas nas disciplinas da rede.
+                    </p>
+
                 </div>
-                <a class="filter-reset dashboard-planning-link" href="{{ url_for('planejamento') }}">
-                    Planejamento pedagógico
+
+                <a class="filter-reset"
+                   href="{{ url_for('frequencia_desempenho') }}">
+                    Analisar
+                    <span>→</span>
                 </a>
+
             </div>
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Disciplina</th>
-                            <th scope="col">Média geral</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for subject in subject_performance %}
-                        <tr>
-                            <td class="student-name">{{ subject.name }}</td>
-                            <td>
-                                {% if subject.average_grade is not none %}
-                                {{ '%.1f'|format(subject.average_grade) }} / 10
-                                {% else %}
-                                <span class="empty-value">Sem notas</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="2" class="empty-state">Nenhuma disciplina cadastrada.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+
+            <div class="subject-performance-list">
+
+                {% for subject in subject_performance %}
+
+                <div class="subject-performance-item">
+
+                    <div class="subject-performance-header">
+
+                        <strong>
+                            {{ subject.name }}
+                        </strong>
+
+                        <span>
+
+                            {% if subject.average_grade is not none %}
+
+                                {{ '%.1f'|format(subject.average_grade) }}
+
+                            {% else %}
+
+                                —
+
+                            {% endif %}
+
+                        </span>
+
+                    </div>
+
+
+                    <div class="subject-progress">
+
+                        <div class="subject-progress__bar"
+
+                             {% if subject.average_grade is not none %}
+
+                             style="width: {{ [subject.average_grade * 10, 100]|min }}%;"
+
+                             {% else %}
+
+                             style="width: 0%;"
+
+                             {% endif %}>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="subject-performance-footer">
+
+                        <span>
+                            Média da disciplina
+                        </span>
+
+                        {% if subject.average_grade is not none %}
+
+                            {% if subject.average_grade >= 7 %}
+
+                                <span class="performance-status performance-status--good">
+                                    Bom desempenho
+                                </span>
+
+                            {% elif subject.average_grade >= 6 %}
+
+                                <span class="performance-status performance-status--attention">
+                                    Acompanhar
+                                </span>
+
+                            {% else %}
+
+                                <span class="performance-status performance-status--critical">
+                                    Atenção
+                                </span>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                {% else %}
+
+                <div class="empty-state">
+                    Nenhuma disciplina com dados de desempenho.
+                </div>
+
+                {% endfor %}
+
             </div>
+
         </section>
 
-        <section class="dashboard-section" aria-labelledby="attendance-title">
+
+        <!-- FREQUÊNCIA POR TURMA -->
+        <section class="dashboard-section"
+                 aria-labelledby="attendance-title">
+
             <div class="section-heading">
+
                 <div>
-                    <p class="eyebrow">Presença</p>
-                    <h2 id="attendance-title">Frequência por turma</h2>
+
+                    <p class="eyebrow">
+                        Frequência
+                    </p>
+
+                    <h2 id="attendance-title">
+                        Frequência por turma
+                    </h2>
+
+                    <p class="section-description">
+                        Acompanhamento da presença dos estudantes.
+                    </p>
+
                 </div>
-                <a class="filter-reset dashboard-class-link" href="{{ url_for('turmas') }}">
-                    Ver todas as turmas
+
+                <a class="filter-reset"
+                   href="{{ url_for('frequencia_desempenho') }}">
+                    Analisar
+                    <span>→</span>
                 </a>
+
             </div>
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th scope="col">Turma</th>
-                            <th scope="col">Escola</th>
-                            <th scope="col">Frequência média</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for class in class_attendance %}
-                        <tr>
-                            <td class="student-name">{{ class.class_name }}</td>
-                            <td>{{ class.school_name }}</td>
-                            <td>
-                                {% if class.attendance_rate is not none %}
+
+
+            <div class="class-attendance-list">
+
+                {% for class in class_attendance %}
+
+                <div class="class-attendance-item">
+
+                    <div class="class-attendance-header">
+
+                        <div>
+
+                            <strong>
+                                {{ class.class_name }}
+                            </strong>
+
+                            <span>
+                                {{ class.school_name }}
+                            </span>
+
+                        </div>
+
+
+                        <strong>
+
+                            {% if class.attendance_rate is not none %}
+
                                 {{ '%.1f'|format(class.attendance_rate) }}%
-                                {% else %}
-                                <span class="empty-value">Sem dados</span>
-                                {% endif %}
-                            </td>
-                        </tr>
+
+                            {% else %}
+
+                                —
+
+                            {% endif %}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="class-progress">
+
+                        <div class="class-progress__bar"
+
+                             {% if class.attendance_rate is not none %}
+
+                             style="width: {{ [class.attendance_rate, 100]|min }}%;"
+
+                             {% else %}
+
+                             style="width: 0%;"
+
+                             {% endif %}>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="class-attendance-status">
+
+                        {% if class.attendance_rate is not none %}
+
+                            {% if class.attendance_rate >= 90 %}
+
+                                <span class="attendance-status attendance-status--good">
+                                    Frequência adequada
+                                </span>
+
+                            {% elif class.attendance_rate >= 75 %}
+
+                                <span class="attendance-status attendance-status--attention">
+                                    Requer acompanhamento
+                                </span>
+
+                            {% else %}
+
+                                <span class="attendance-status attendance-status--critical">
+                                    Frequência crítica
+                                </span>
+
+                            {% endif %}
+
                         {% else %}
-                        <tr>
-                            <td colspan="3" class="empty-state">Nenhuma turma cadastrada.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+                            <span class="attendance-status">
+                                Sem dados suficientes
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                {% else %}
+
+                <div class="empty-state">
+                    Nenhuma turma cadastrada.
+                </div>
+
+                {% endfor %}
+
             </div>
+
         </section>
+
     </div>
+
+
+    <!-- =========================================================
+         VISÃO DA SECRETARIA
+    ========================================================== -->
+    <section class="secretariat-overview">
+
+        <div class="secretariat-overview__header">
+
+            <div>
+
+                <p class="eyebrow">
+                    Gestão da rede
+                </p>
+
+                <h2>
+                    Visão da Secretaria de Educação
+                </h2>
+
+                <p>
+                    Indicadores organizados para apoiar o acompanhamento
+                    pedagógico e a tomada de decisão.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="secretariat-overview__grid">
+
+            <a href="{{ url_for('alunos') }}"
+               class="overview-action-card">
+
+                <div class="overview-action-card__icon">
+                    AL
+                </div>
+
+                <div>
+
+                    <strong>
+                        Gestão de alunos
+                    </strong>
+
+                    <span>
+                        Consulte estudantes e informações cadastrais.
+                    </span>
+
+                </div>
+
+                <span class="overview-action-card__arrow">
+                    →
+                </span>
+
+            </a>
+
+
+            <a href="{{ url_for('escolas') }}"
+               class="overview-action-card">
+
+                <div class="overview-action-card__icon">
+                    ES
+                </div>
+
+                <div>
+
+                    <strong>
+                        Rede escolar
+                    </strong>
+
+                    <span>
+                        Acompanhe as unidades e seus indicadores.
+                    </span>
+
+                </div>
+
+                <span class="overview-action-card__arrow">
+                    →
+                </span>
+
+            </a>
+
+
+            <a href="{{ url_for('acompanhamento') }}"
+               class="overview-action-card">
+
+                <div class="overview-action-card__icon">
+                    AC
+                </div>
+
+                <div>
+
+                    <strong>
+                        Acompanhamento pedagógico
+                    </strong>
+
+                    <span>
+                        Identifique estudantes que precisam de atenção.
+                    </span>
+
+                </div>
+
+                <span class="overview-action-card__arrow">
+                    →
+                </span>
+
+            </a>
+
+
+            <a href="{{ url_for('relatorios') }}"
+               class="overview-action-card">
+
+                <div class="overview-action-card__icon">
+                    RE
+                </div>
+
+                <div>
+
+                    <strong>
+                        Relatórios
+                    </strong>
+
+                    <span>
+                        Consulte informações consolidadas da rede.
+                    </span>
+
+                </div>
+
+                <span class="overview-action-card__arrow">
+                    →
+                </span>
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         ANÁLISE INTELIGENTE
+    ========================================================== -->
+    <section class="intelligent-analysis">
+
+        <div class="intelligent-analysis__icon">
+            IA
+        </div>
+
+
+        <div class="intelligent-analysis__content">
+
+            <span class="eyebrow">
+                Inteligência educacional
+            </span>
+
+            <h2>
+                Apoio à decisão pedagógica
+            </h2>
+
+            <p>
+                A plataforma pode cruzar frequência, desempenho e histórico
+                dos estudantes para identificar padrões, priorizar situações
+                de atenção e apoiar a equipe pedagógica na tomada de decisão.
+            </p>
+
+        </div>
+
+
+        <a href="{{ url_for('acompanhamento') }}"
+           class="intelligent-analysis__action">
+
+            Acessar acompanhamento
+            <span>→</span>
+
+        </a>
+
+    </section>
+
+
+    <!-- =========================================================
+         RODAPÉ DO DASHBOARD
+    ========================================================== -->
+    <footer class="dashboard-footer">
+
+        <div>
+
+            <strong>
+                Gestão Educacional
+            </strong>
+
+            <span>
+                Rede Municipal de Educação de Lagoa do Carro - PE
+            </span>
+
+        </div>
+
+        <span>
+            Plataforma de acompanhamento e gestão educacional
+        </span>
+
+    </footer>
+
 </div>
+
 {% endblock %}

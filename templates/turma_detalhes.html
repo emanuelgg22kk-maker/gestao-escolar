@@ -1,111 +1,549 @@
 {% extends "base.html" %}
 
-{% block title %}Turma {{ class_detail.name }} | Gestão Escolar{% endblock %}
+{% block title %}Turma {{ class_detail.name }} | Gestão Educacional{% endblock %}
 
 {% block content %}
+
 <div class="dashboard class-detail-page">
-    <header class="dashboard-header profile-header">
+
+
+<!-- =====================================================
+     CABEÇALHO
+====================================================== -->
+<header class="dashboard-header profile-header">
+
+    <div>
+
+        <p class="eyebrow">
+            Rede Municipal de Educação
+        </p>
+
+        <h1>
+            {{ class_detail.name }} · {{ class_detail.school_year }}
+        </h1>
+
+        <p class="profile-meta">
+
+            <span>
+                Turma
+            </span>
+
+            <span>
+                ·
+            </span>
+
+            <a
+                class="profile-link"
+                href="{{ url_for(
+                    'escola_detalhes',
+                    school_id=class_detail.school_id
+                ) }}"
+            >
+                {{ class_detail.school_name }}
+            </a>
+
+            <span>
+                ·
+            </span>
+
+            <span>
+                {{ class_detail.shift_label }}
+            </span>
+
+        </p>
+
+    </div>
+
+
+    <div class="profile-navigation">
+
+        <a
+            class="back-link"
+            href="{{ url_for('turmas') }}"
+        >
+            ← Voltar para turmas
+        </a>
+
+        <a
+            class="filter-reset"
+            href="{{ url_for('dashboard') }}"
+        >
+            Dashboard
+        </a>
+
+    </div>
+
+</header>
+
+{% if can_assign_students %}
+<section class="dashboard-section management-card" aria-labelledby="assign-student-title">
+    <h2 id="assign-student-title">Adicionar aluno já cadastrado</h2>
+    <p class="section-description">
+        Vincule um aluno desta escola à turma sem criar um novo cadastro.
+    </p>
+    {% if available_students %}
+    <form method="post" action="{{ url_for('adicionar_aluno_a_turma', class_id=class_detail.id) }}" class="management-form">
+        <div class="filter-field">
+            <label for="existing-student">Aluno</label>
+            <select id="existing-student" name="student_id" required>
+                <option value="">Selecione um aluno</option>
+                {% for student in available_students %}
+                <option value="{{ student.id }}">{{ student.full_name }} · Matrícula {{ student.enrollment_number }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit">Adicionar à turma</button>
+    </form>
+    {% else %}
+    <p class="data-note">Não há outros alunos cadastrados nesta escola para vincular.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+<!-- =====================================================
+     INDICADORES DA TURMA
+====================================================== -->
+<section
+    class="summary-grid class-detail-summary"
+    aria-label="Indicadores da turma"
+>
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Alunos
+        </span>
+
+        <p class="summary-value">
+            {{ class_detail.student_count }}
+        </p>
+
+        <span class="metric-description">
+            Estudantes matriculados na turma
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Média de desempenho
+        </span>
+
+        <p class="summary-value">
+
+            {% if class_detail.average_grade is not none %}
+
+            {{ '%.2f'|format(class_detail.average_grade) }}
+
+            <span class="value-unit">
+                / 10
+            </span>
+
+            {% else %}
+
+            <span class="empty-value">
+                Sem dados
+            </span>
+
+            {% endif %}
+
+        </p>
+
+        <span class="metric-description">
+            Resultado médio dos estudantes
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Frequência média
+        </span>
+
+        <p class="summary-value">
+
+            {% if class_detail.average_attendance is not none %}
+
+            {{ '%.1f'|format(class_detail.average_attendance) }}
+
+            <span class="value-unit">
+                %
+            </span>
+
+            {% else %}
+
+            <span class="empty-value">
+                Sem dados
+            </span>
+
+            {% endif %}
+
+        </p>
+
+        <span class="metric-description">
+            Presença média registrada
+        </span>
+
+    </article>
+
+</section>
+
+
+<!-- =====================================================
+     ALUNOS DA TURMA
+====================================================== -->
+<section
+    class="dashboard-section class-detail-students"
+    aria-labelledby="students-title"
+>
+
+    <div class="section-heading">
+
         <div>
-            <p class="eyebrow">Detalhes da turma</p>
-            <h1>{{ class_detail.name }} · {{ class_detail.school_year }}</h1>
-            <p class="profile-meta">
-                <a class="profile-link" href="{{ url_for('escola_detalhes', school_id=class_detail.school_id) }}">
-                    {{ class_detail.school_name }}
-                </a>
-                <span>·</span> {{ class_detail.shift_label }}
-            </p>
-        </div>
-        <div class="profile-navigation">
-            <a class="back-link" href="{{ url_for('turmas') }}">Voltar para turmas</a>
-            <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
-        </div>
-    </header>
 
-    <section class="summary-grid" aria-label="Indicadores da turma">
-        <article class="summary-card">
-            <h2>Alunos</h2>
-            <p class="summary-value">{{ class_detail.student_count }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Média de desempenho</h2>
-            <p class="summary-value">
-                {% if class_detail.average_grade is not none %}
-                {{ '%.2f'|format(class_detail.average_grade) }}<span class="value-unit">/ 10</span>
-                {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+            <p class="eyebrow">
+                Acompanhamento pedagógico
             </p>
-        </article>
-        <article class="summary-card">
-            <h2>Frequência média</h2>
-            <p class="summary-value">
-                {% if class_detail.average_attendance is not none %}
-                {{ '%.1f'|format(class_detail.average_attendance) }}<span class="value-unit">%</span>
-                {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-            </p>
-        </article>
-    </section>
 
-    <section class="dashboard-section class-detail-students" aria-labelledby="students-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Acompanhamento</p>
-                <h2 id="students-title">Alunos da turma</h2>
-            </div>
-            <p class="results-count">{{ students|length }} aluno(s)</p>
+            <h2 id="students-title">
+                Alunos da turma
+            </h2>
+
         </div>
-        <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th scope="col">Aluno</th>
-                        <th scope="col">Média</th>
-                        <th scope="col">Frequência</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for student in students %}
-                    <tr>
-                        <td>
-                            <a class="profile-link student-name"
-                                href="{{ url_for('aluno_perfil', student_id=student.id) }}">
-                                {{ student.full_name }}
-                            </a>
-                        </td>
-                        <td>
-                            {% if student.average_grade is not none %}
-                            {{ '%.1f'|format(student.average_grade) }} / 10
-                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-                        </td>
-                        <td>
-                            {% if student.attendance_rate is not none %}
+
+
+        <div class="results-summary">
+
+            <strong>
+                {{ students|length }}
+            </strong>
+
+            <span>
+                aluno(s)
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="table-scroll">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th scope="col">
+                        Aluno
+                    </th>
+
+                    <th scope="col">
+                        Média
+                    </th>
+
+                    <th scope="col">
+                        Frequência
+                    </th>
+
+                    <th scope="col">
+                        Situação
+                    </th>
+
+                    <th scope="col">
+                        Ação
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for student in students %}
+
+                <tr>
+
+                    <!-- Aluno -->
+                    <td>
+
+                        <a
+                            class="profile-link student-name"
+                            href="{{ url_for(
+                                'aluno_perfil',
+                                student_id=student.id
+                            ) }}"
+                        >
+                            {{ student.full_name }}
+                        </a>
+
+                    </td>
+
+
+                    <!-- Média -->
+                    <td>
+
+                        {% if student.average_grade is not none %}
+
+                        <strong>
+                            {{ '%.1f'|format(student.average_grade) }}
+                        </strong>
+
+                        <span class="value-unit">
+                            / 10
+                        </span>
+
+                        {% else %}
+
+                        <span class="empty-value">
+                            Sem dados
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- Frequência -->
+                    <td>
+
+                        {% if student.attendance_rate is not none %}
+
+                        <strong>
                             {{ '%.1f'|format(student.attendance_rate) }}%
-                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-                        </td>
-                        <td>
-                            <span
-                                class="student-status {% if student.situation == 'attention' %}student-status--attention{% else %}student-status--regular{% endif %}">
-                                {{ student.situation_label }}
-                            </span>
-                        </td>
-                        <td>
-                            <a class="profile-link" href="{{ url_for('aluno_perfil', student_id=student.id) }}">
-                                Ver perfil
-                            </a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="empty-state">Nenhum aluno cadastrado nesta turma.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
+                        </strong>
 
-    <nav class="profile-bottom-navigation" aria-label="Navegação da turma">
-        <a class="back-link" href="{{ url_for('turmas') }}">Voltar para turmas</a>
-    </nav>
+                        {% else %}
+
+                        <span class="empty-value">
+                            Sem dados
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- Situação -->
+                    <td>
+
+                        <span
+                            class="student-status
+                            {% if student.situation == 'attention' %}
+                                student-status--attention
+                            {% else %}
+                                student-status--regular
+                            {% endif %}"
+                        >
+                            {{ student.situation_label }}
+                        </span>
+
+                    </td>
+
+
+                    <!-- Ação -->
+                    <td>
+
+                        <a
+                            class="table-action-link"
+                            href="{{ url_for(
+                                'aluno_perfil',
+                                student_id=student.id
+                            ) }}"
+                        >
+                            Ver perfil →
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="empty-state"
+                    >
+
+                        <strong>
+                            Nenhum aluno cadastrado
+                        </strong>
+
+                        <span>
+                            Não existem estudantes cadastrados
+                            nesta turma.
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     LEITURA DA TURMA
+====================================================== -->
+<section
+    class="dashboard-section class-detail-insight"
+    aria-labelledby="class-insight-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Visão pedagógica
+            </p>
+
+            <h2 id="class-insight-title">
+                Acompanhamento da turma
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="class-insight-grid">
+
+        <div class="class-insight-card">
+
+            <span class="metric-label">
+                Unidade escolar
+            </span>
+
+            <a
+                class="profile-link"
+                href="{{ url_for(
+                    'escola_detalhes',
+                    school_id=class_detail.school_id
+                ) }}"
+            >
+                {{ class_detail.school_name }}
+            </a>
+
+        </div>
+
+
+        <div class="class-insight-card">
+
+            <span class="metric-label">
+                Ano letivo
+            </span>
+
+            <strong>
+                {{ class_detail.school_year }}
+            </strong>
+
+        </div>
+
+
+        <div class="class-insight-card">
+
+            <span class="metric-label">
+                Turno
+            </span>
+
+            <strong>
+                {{ class_detail.shift_label }}
+            </strong>
+
+        </div>
+
+
+        <div class="class-insight-card">
+
+            <span class="metric-label">
+                Estudantes em acompanhamento
+            </span>
+
+            <strong>
+
+                {% set attention_students = namespace(value=0) %}
+
+                {% for student in students %}
+
+                    {% if student.situation == 'attention' %}
+                        {% set attention_students.value = attention_students.value + 1 %}
+                    {% endif %}
+
+                {% endfor %}
+
+                {{ attention_students.value }}
+
+            </strong>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     NAVEGAÇÃO
+====================================================== -->
+<nav
+    class="profile-bottom-navigation"
+    aria-label="Navegação da turma"
+>
+
+    <a
+        class="back-link"
+        href="{{ url_for('turmas') }}"
+    >
+        ← Voltar para turmas
+    </a>
+
+    <a
+        class="filter-reset"
+        href="{{ url_for('dashboard') }}"
+    >
+        Dashboard
+    </a>
+
+</nav>
+
+
+<!-- =====================================================
+     RODAPÉ
+====================================================== -->
+<footer class="page-footer">
+
+    <div>
+
+        <strong>
+            Gestão Educacional Inteligente
+        </strong>
+
+        <span>
+            Acompanhamento pedagógico da Rede Municipal
+        </span>
+
+    </div>
+
+</footer>
+
+
 </div>
+
 {% endblock %}

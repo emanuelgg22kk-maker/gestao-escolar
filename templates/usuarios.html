@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro de contas | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard management-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Acesso ao sistema</p>
+            <h1>Cadastro de contas</h1>
+            <p class="dashboard-context">Cadastro restrito a administradores; não há inscrição pública.</p>
+        </div>
+        <div class="profile-navigation">
+            <a class="back-link" href="{{ url_for('baixar_logins') }}">Baixar logins_disponiveis.txt</a>
+            <a class="back-link" href="{{ url_for('logout') }}">Já tem login? Entre!</a>
+        </div>
+    </header>
+
+    {% if errors %}
+    <div class="form-errors" role="alert">
+        {% for error in errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="dashboard-section management-card">
+        <h2>Criar acesso</h2>
+        <form method="post" class="management-form">
+            <div class="filter-field">
+                <label for="account-username">Nome de usuário</label>
+                <input id="account-username" name="username" minlength="3" maxlength="80" autocomplete="off" required>
+            </div>
+            <div class="filter-field">
+                <label for="account-password">Senha inicial</label>
+                <input id="account-password" name="password" type="password" minlength="8" autocomplete="new-password" required>
+            </div>
+            <div class="filter-field">
+                <label for="account-role">Perfil</label>
+                <select id="account-role" name="role" required>
+                    <option value="">Selecione</option>
+                    <option value="admin">Administrador</option>
+                    <option value="diretor">Diretor de escola</option>
+                    <option value="professor">Professor</option>
+                    <option value="aluno">Aluno</option>
+                    <option value="responsavel">Responsável</option>
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="account-school">Escola (diretor)</label>
+                <select id="account-school" name="school_id">
+                    <option value="">Selecione quando aplicável</option>
+                    {% for school in data.schools %}
+                    <option value="{{ school.id }}">{{ school.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="account-teacher">Professor vinculado</label>
+                <select id="account-teacher" name="teacher_id">
+                    <option value="">Selecione quando aplicável</option>
+                    {% for teacher in data.teachers %}
+                    <option value="{{ teacher.id }}">{{ teacher.full_name }} · {{ teacher.school_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="account-student">Aluno vinculado (aluno/responsável)</label>
+                <select id="account-student" name="student_id">
+                    <option value="">Selecione quando aplicável</option>
+                    {% for student in data.students %}
+                    <option value="{{ student.id }}">{{ student.full_name }} · {{ student.school_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <p class="data-note">Cada conta de aluno ou responsável fica vinculada a um único perfil de aluno. O TXT contém nomes e perfis, nunca senhas.</p>
+            <button type="submit">Criar usuário</button>
+        </form>
+    </section>
+
+    <section class="dashboard-section management-list">
+        <div class="section-heading"><h2>Contas ativas</h2></div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr><th>Usuário</th><th>Perfil</th><th>Vínculo</th><th>Escola</th></tr></thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ {'admin': 'Administrador', 'diretor': 'Diretor', 'professor': 'Professor', 'aluno': 'Aluno', 'responsavel': 'Responsável'}[user.role] }}</td>
+                        <td>{{ user.person_name or '—' }}</td>
+                        <td>{{ user.school_name or '—' }}</td>
+                    </tr>
+                    {% else %}<tr><td colspan="4" class="empty-state">Nenhuma conta ativa.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

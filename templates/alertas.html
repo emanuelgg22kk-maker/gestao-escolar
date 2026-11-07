@@ -3,139 +3,635 @@
 {% block title %}Alertas | Gestão Escolar{% endblock %}
 
 {% block content %}
+
 <div class="dashboard alert-page">
-    <header class="dashboard-header">
-        <div>
-            <p class="eyebrow">Gestão Escolar</p>
-            <h1>Alertas</h1>
+
+
+<!-- =====================================================
+     CABEÇALHO
+====================================================== -->
+<header class="dashboard-header dashboard-header--municipal">
+
+    <div class="dashboard-branding">
+
+        <div class="municipal-mark" aria-label="Lagoa do Carro - Pernambuco">
+            <span class="municipal-mark__top">LAGOA DO</span>
+            <strong>CARRO</strong>
+            <span class="municipal-mark__bottom">PERNAMBUCO</span>
         </div>
-        <p class="dashboard-context">Acompanhamento de alertas pedagógicos</p>
-    </header>
 
-    <section class="summary-grid" aria-label="Resumo dos alertas">
-        <article class="summary-card">
-            <h2>Total de alertas</h2>
-            <p class="summary-value">{{ summary.total_alerts }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Alertas de frequência</h2>
-            <p class="summary-value">{{ summary.attendance_alerts }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Alertas de desempenho</h2>
-            <p class="summary-value">{{ summary.performance_alerts }}</p>
-        </article>
-        <article class="summary-card summary-card--attention">
-            <h2>Prioridade crítica</h2>
-            <p class="summary-value">{{ summary.high_priority_alerts }}</p>
-        </article>
-    </section>
+        <div class="dashboard-heading-content">
 
-    <section class="dashboard-section" aria-label="Filtros de alertas">
-        <form class="student-filters alert-filters" method="get" action="{{ url_for('alertas') }}">
-            <div class="filter-field">
-                <label for="category-filter">Categoria</label>
-                <select id="category-filter" name="categoria">
-                    <option value="">Todas as categorias</option>
-                    {% for category in categories %}
-                    <option value="{{ category.category }}" {% if filters.category==category.category %}selected{% endif
-                        %}>
-                        {{ category_labels.get(category.category, category.category) }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="filter-field">
-                <label for="priority-filter">Prioridade</label>
-                <select id="priority-filter" name="prioridade">
-                    <option value="">Todas as prioridades</option>
-                    <option value="info" {% if filters.priority=='info' %}selected{% endif %}>Informativa</option>
-                    <option value="warning" {% if filters.priority=='warning' %}selected{% endif %}>Atenção</option>
-                    <option value="critical" {% if filters.priority=='critical' %}selected{% endif %}>Crítica</option>
-                </select>
-            </div>
-            <div class="filter-field">
-                <label for="alert-school-filter">Escola</label>
-                <select id="alert-school-filter" name="escola">
-                    <option value="">Todas as escolas</option>
-                    {% for school in schools %}
-                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
-                        {{ school.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="filter-field">
-                <label for="alert-class-filter">Turma</label>
-                <select id="alert-class-filter" name="turma">
-                    <option value="">Todas as turmas</option>
-                    {% for class in classes %}
-                    <option value="{{ class.id }}" {% if filters.class_id==class.id|string %}selected{% endif %}>
-                        {{ class.name }} · {{ class.school_name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="filter-field">
-                <label for="student-name-filter">Nome do aluno</label>
-                <input id="student-name-filter" name="aluno" type="search" value="{{ filters.student_name }}"
-                    placeholder="Buscar aluno">
-            </div>
-            <div class="filter-actions">
-                <button type="submit">Filtrar</button>
-                <a class="filter-reset" href="{{ url_for('alertas') }}">Limpar</a>
-            </div>
-        </form>
-    </section>
+            <p class="eyebrow">
+                Rede Municipal de Educação
+            </p>
 
-    <section class="dashboard-section alert-results" aria-labelledby="alerts-table-title">
-        <div class="section-heading">
+            <h1>
+                Alertas
+            </h1>
+
+            <p class="dashboard-subtitle">
+                Identificação e acompanhamento de situações que
+                exigem atenção pedagógica na rede municipal.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-header-actions">
+
+        <div class="dashboard-status">
+
+            <span class="dashboard-status__dot"></span>
+
             <div>
-                <p class="eyebrow">Registros</p>
-                <h2 id="alerts-table-title">Lista de alertas</h2>
+                <strong>
+                    Monitoramento ativo
+                </strong>
+
+                <span>
+                    Alertas pedagógicos
+                </span>
             </div>
-            <p class="results-count">{{ alerts|length }} resultado(s)</p>
+
         </div>
-        <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th scope="col">Aluno</th>
-                        <th scope="col">Escola</th>
-                        <th scope="col">Turma</th>
-                        <th scope="col">Categoria</th>
-                        <th scope="col">Mensagem</th>
-                        <th scope="col">Prioridade</th>
-                        <th scope="col">Data</th>
-                        <th scope="col">Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for alert in alerts %}
-                    <tr>
-                        <td class="student-name">{{ alert.full_name }}</td>
-                        <td>{{ alert.school_name }}</td>
-                        <td>{{ alert.class_name }}</td>
-                        <td><span class="alert-category">{{ alert.category_label }}</span></td>
-                        <td>{{ alert.message }}</td>
-                        <td>
-                            <span class="priority priority--{{ alert.severity }}">{{ alert.priority_label }}</span>
-                        </td>
-                        <td>{{ alert.created_at }}</td>
-                        <td>
-                            <a class="profile-link" href="{{ url_for('aluno_perfil', student_id=alert.student_id) }}">
-                                Ver perfil
-                            </a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="8" class="empty-state">Nenhum alerta encontrado para os filtros selecionados.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+
+        <a
+            class="dashboard-action"
+            href="{{ url_for('dashboard') }}"
+        >
+            Dashboard
+        </a>
+
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+     INDICADORES
+====================================================== -->
+<section
+    class="dashboard-section dashboard-section--metrics"
+    aria-labelledby="alerts-summary-title"
+>
+
+    <div class="section-heading section-heading--dashboard">
+
+        <div>
+
+            <p class="eyebrow">
+                Visão geral
+            </p>
+
+            <h2 id="alerts-summary-title">
+                Situação dos alertas
+            </h2>
+
         </div>
-    </section>
+
+        <span class="section-context">
+            Monitoramento pedagógico
+        </span>
+
+    </div>
+
+
+    <div class="summary-grid">
+
+        <!-- TOTAL -->
+        <article class="summary-card dashboard-metric-card--students">
+
+            <div class="metric-card-top">
+
+                <span class="metric-icon" aria-hidden="true">
+                    AL
+                </span>
+
+                <span class="metric-label">
+                    Total de alertas
+                </span>
+
+            </div>
+
+            <p class="summary-value">
+                {{ summary.total_alerts }}
+            </p>
+
+            <span class="metric-description">
+                Alertas registrados no acompanhamento pedagógico.
+            </span>
+
+        </article>
+
+
+        <!-- FREQUÊNCIA -->
+        <article class="summary-card dashboard-metric-card--attendance">
+
+            <div class="metric-card-top">
+
+                <span class="metric-icon" aria-hidden="true">
+                    FR
+                </span>
+
+                <span class="metric-label">
+                    Alertas de frequência
+                </span>
+
+            </div>
+
+            <p class="summary-value">
+                {{ summary.attendance_alerts }}
+            </p>
+
+            <span class="metric-description">
+                Ocorrências relacionadas à frequência escolar.
+            </span>
+
+        </article>
+
+
+        <!-- DESEMPENHO -->
+        <article class="summary-card dashboard-metric-card--performance">
+
+            <div class="metric-card-top">
+
+                <span class="metric-icon" aria-hidden="true">
+                    DE
+                </span>
+
+                <span class="metric-label">
+                    Alertas de desempenho
+                </span>
+
+            </div>
+
+            <p class="summary-value">
+                {{ summary.performance_alerts }}
+            </p>
+
+            <span class="metric-description">
+                Ocorrências relacionadas ao desempenho acadêmico.
+            </span>
+
+        </article>
+
+
+        <!-- CRÍTICOS -->
+        <article class="summary-card summary-card--attention dashboard-metric-card--critical">
+
+            <div class="metric-card-top">
+
+                <span class="metric-icon" aria-hidden="true">
+                    !
+                </span>
+
+                <span class="metric-label">
+                    Prioridade crítica
+                </span>
+
+            </div>
+
+            <p class="summary-value">
+                {{ summary.high_priority_alerts }}
+            </p>
+
+            <span class="metric-description">
+                Alertas que demandam atenção prioritária.
+            </span>
+
+        </article>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     FILTROS
+====================================================== -->
+<section
+    class="dashboard-section"
+    aria-labelledby="alert-filters-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Pesquisa
+            </p>
+
+            <h2 id="alert-filters-title">
+                Filtrar alertas
+            </h2>
+
+            <p class="section-description">
+                Consulte ocorrências por categoria, prioridade,
+                escola, turma ou estudante.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <form
+        class="student-filters alert-filters"
+        method="get"
+        action="{{ url_for('alertas') }}"
+    >
+
+        <!-- CATEGORIA -->
+        <div class="filter-field">
+
+            <label for="category-filter">
+                Categoria
+            </label>
+
+            <select
+                id="category-filter"
+                name="categoria"
+            >
+
+                <option value="">
+                    Todas as categorias
+                </option>
+
+                {% for category in categories %}
+
+                <option
+                    value="{{ category.category }}"
+                    {% if filters.category == category.category %}selected{% endif %}
+                >
+                    {{ category_labels.get(category.category, category.category) }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <!-- PRIORIDADE -->
+        <div class="filter-field">
+
+            <label for="priority-filter">
+                Prioridade
+            </label>
+
+            <select
+                id="priority-filter"
+                name="prioridade"
+            >
+
+                <option value="">
+                    Todas as prioridades
+                </option>
+
+                <option
+                    value="info"
+                    {% if filters.priority == 'info' %}selected{% endif %}
+                >
+                    Informativa
+                </option>
+
+                <option
+                    value="warning"
+                    {% if filters.priority == 'warning' %}selected{% endif %}
+                >
+                    Atenção
+                </option>
+
+                <option
+                    value="critical"
+                    {% if filters.priority == 'critical' %}selected{% endif %}
+                >
+                    Crítica
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- ESCOLA -->
+        <div class="filter-field">
+
+            <label for="alert-school-filter">
+                Escola
+            </label>
+
+            <select
+                id="alert-school-filter"
+                name="escola"
+            >
+
+                <option value="">
+                    Todas as escolas
+                </option>
+
+                {% for school in schools %}
+
+                <option
+                    value="{{ school.id }}"
+                    {% if filters.school_id == school.id|string %}selected{% endif %}
+                >
+                    {{ school.name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <!-- TURMA -->
+        <div class="filter-field">
+
+            <label for="alert-class-filter">
+                Turma
+            </label>
+
+            <select
+                id="alert-class-filter"
+                name="turma"
+            >
+
+                <option value="">
+                    Todas as turmas
+                </option>
+
+                {% for class in classes %}
+
+                <option
+                    value="{{ class.id }}"
+                    {% if filters.class_id == class.id|string %}selected{% endif %}
+                >
+                    {{ class.name }} · {{ class.school_name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <!-- ALUNO -->
+        <div class="filter-field">
+
+            <label for="student-name-filter">
+                Nome do aluno
+            </label>
+
+            <input
+                id="student-name-filter"
+                name="aluno"
+                type="search"
+                value="{{ filters.student_name }}"
+                placeholder="Buscar aluno"
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <!-- AÇÕES -->
+        <div class="filter-actions">
+
+            <button type="submit">
+                Filtrar
+            </button>
+
+            <a
+                class="filter-reset"
+                href="{{ url_for('alertas') }}"
+            >
+                Limpar
+            </a>
+
+        </div>
+
+    </form>
+
+</section>
+
+
+<!-- =====================================================
+     LISTA DE ALERTAS
+====================================================== -->
+<section
+    class="dashboard-section alert-results"
+    aria-labelledby="alerts-table-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Monitoramento
+            </p>
+
+            <h2 id="alerts-table-title">
+                Lista de alertas
+            </h2>
+
+            <p class="section-description">
+                Consulte os registros identificados pelo sistema
+                e acesse o perfil do estudante para uma análise
+                individual.
+            </p>
+
+        </div>
+
+
+        <p class="results-count">
+
+            <strong>
+                {{ alerts|length }}
+            </strong>
+
+            resultado(s)
+
+        </p>
+
+    </div>
+
+
+    <div class="table-scroll">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th scope="col">
+                        Aluno
+                    </th>
+
+                    <th scope="col">
+                        Escola
+                    </th>
+
+                    <th scope="col">
+                        Turma
+                    </th>
+
+                    <th scope="col">
+                        Categoria
+                    </th>
+
+                    <th scope="col">
+                        Mensagem
+                    </th>
+
+                    <th scope="col">
+                        Prioridade
+                    </th>
+
+                    <th scope="col">
+                        Data
+                    </th>
+
+                    <th scope="col">
+                        Ação
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for alert in alerts %}
+
+                <tr>
+
+                    <!-- ALUNO -->
+                    <td class="student-name">
+                        {{ alert.full_name }}
+                    </td>
+
+
+                    <!-- ESCOLA -->
+                    <td>
+                        {{ alert.school_name }}
+                    </td>
+
+
+                    <!-- TURMA -->
+                    <td>
+                        {{ alert.class_name }}
+                    </td>
+
+
+                    <!-- CATEGORIA -->
+                    <td>
+
+                        <span class="alert-category">
+                            {{ alert.category_label }}
+                        </span>
+
+                    </td>
+
+
+                    <!-- MENSAGEM -->
+                    <td class="alert-message">
+                        {{ alert.message }}
+                    </td>
+
+
+                    <!-- PRIORIDADE -->
+                    <td>
+
+                        <span
+                            class="priority priority--{{ alert.severity }}"
+                        >
+                            {{ alert.priority_label }}
+                        </span>
+
+                    </td>
+
+
+                    <!-- DATA -->
+                    <td>
+                        {{ alert.created_at }}
+                    </td>
+
+
+                    <!-- AÇÃO -->
+                    <td>
+
+                        <a
+                            class="profile-link"
+                            href="{{ url_for('aluno_perfil', student_id=alert.student_id) }}"
+                        >
+                            Ver perfil
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="8"
+                        class="empty-state"
+                    >
+                        Nenhum alerta encontrado para os filtros
+                        selecionados.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     RODAPÉ
+====================================================== -->
+<footer class="dashboard-footer">
+
+    <div>
+
+        <strong>
+            Gestão Educacional Inteligente
+        </strong>
+
+        <span>
+            Secretaria Municipal de Educação de Lagoa do Carro
+        </span>
+
+    </div>
+
+    <span>
+        Monitoramento de alertas
+    </span>
+
+</footer>
+
+
 </div>
 {% endblock %}

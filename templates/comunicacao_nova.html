@@ -1,77 +1,68 @@
 {% extends "base.html" %}
 
-{% block title %}Nova comunicação | Gestão Escolar{% endblock %}
+{% block title %}Nova mensagem | Gestão Educacional{% endblock %}
 
 {% block content %}
 <div class="dashboard communication-compose-page">
     <header class="dashboard-header profile-header">
         <div>
-            <p class="eyebrow">Comunicação</p>
-            <h1>Nova comunicação</h1>
+            <p class="eyebrow">Comunicação institucional</p>
+            <h1>Nova mensagem</h1>
+            <p class="profile-meta">Envie uma mensagem diretamente a professores e diretores.</p>
         </div>
-        <a class="back-link" href="{{ url_for('comunicacao') }}">Voltar para comunicações</a>
+        <div class="profile-navigation">
+            <a class="back-link" href="{{ url_for('comunicacao') }}">← Voltar para comunicações</a>
+        </div>
     </header>
 
-    <section class="dashboard-section communication-compose" aria-label="Formulário de comunicação">
+    <section class="dashboard-section communication-compose" aria-labelledby="communication-form-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Mensagem direta</p>
+                <h2 id="communication-form-title">Destinatário e conteúdo</h2>
+            </div>
+        </div>
+
         {% if errors %}
         <div class="form-errors" role="alert">
+            <strong>Não foi possível enviar a mensagem.</strong>
             {% for error in errors %}<p>{{ error }}</p>{% endfor %}
         </div>
         {% endif %}
 
         <form method="post" action="{{ url_for('nova_comunicacao') }}">
             <div class="communication-form-grid">
-                <div class="filter-field">
-                    <label for="communication-direction">Direção</label>
-                    <select id="communication-direction" name="direction" required>
-                        <option value="sent" {% if form_data.direction=='sent' %}selected{% endif %}>Enviada</option>
-                        <option value="received" {% if form_data.direction=='received' %}selected{% endif %}>Recebida
-                        </option>
-                    </select>
-                </div>
-                <div class="filter-field">
-                    <label for="communication-type">Tipo</label>
-                    <select id="communication-type" name="message_type" required>
-                        <option value="family" {% if form_data.message_type=='family' %}selected{% endif %}>Família
-                        </option>
-                        <option value="school" {% if form_data.message_type=='school' %}selected{% endif %}>Escola
-                        </option>
-                        <option value="management" {% if form_data.message_type=='management' %}selected{% endif %}>
-                            Gestão</option>
-                    </select>
-                </div>
-                <div class="filter-field">
-                    <label for="communication-school">Escola (opcional)</label>
-                    <select id="communication-school" name="school_id">
-                        <option value="">Sem escola específica</option>
-                        {% for school in schools %}
-                        <option value="{{ school.id }}" {% if form_data.school_id==school.id|string %}selected{% endif
-                            %}>
-                            {{ school.name }}
+                <div class="filter-field communication-form-wide">
+                    <label for="communication-recipient">Enviar para</label>
+                    <span class="field-help">Selecione um professor ou diretor disponível para sua escola.</span>
+                    <select id="communication-recipient" name="recipient_user_id" required>
+                        <option value="">Selecione um destinatário</option>
+                        {% for recipient in recipients %}
+                        <option value="{{ recipient.id }}"
+                            {% if form_data.recipient_user_id == recipient.id|string %}selected{% endif %}>
+                            {{ recipient.display_name }} · {{ 'Diretor' if recipient.role == 'diretor' else 'Professor' }}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="filter-field">
-                    <label for="communication-recipient">Destinatário</label>
-                    <input id="communication-recipient" name="recipient" type="text" value="{{ form_data.recipient }}"
-                        maxlength="160" required>
-                </div>
+
                 <div class="filter-field communication-form-wide">
                     <label for="communication-subject">Assunto</label>
-                    <input id="communication-subject" name="subject" type="text" value="{{ form_data.subject }}"
-                        maxlength="200" required>
+                    <input id="communication-subject" name="subject" type="text"
+                        value="{{ form_data.subject }}" maxlength="200"
+                        placeholder="Informe o assunto" required>
                 </div>
+
                 <div class="filter-field communication-form-wide">
                     <label for="communication-message">Mensagem</label>
-                    <textarea id="communication-message" name="message" rows="7"
-                        required>{{ form_data.message }}</textarea>
+                    <textarea id="communication-message" name="message" rows="8"
+                        placeholder="Digite sua mensagem..." required>{{ form_data.message }}</textarea>
+                    <span class="field-help">A mensagem ficará disponível apenas para você e para o destinatário.</span>
                 </div>
             </div>
-            <p class="data-note">Mensagens recebidas iniciam como não lidas; mensagens enviadas são registradas como
-                enviadas.</p>
+
             <div class="filter-actions communication-form-actions">
-                <button type="submit">Registrar comunicação</button>
+                <button type="submit">Enviar mensagem</button>
                 <a class="filter-reset" href="{{ url_for('comunicacao') }}">Cancelar</a>
             </div>
         </form>

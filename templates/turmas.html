@@ -1,111 +1,533 @@
 {% extends "base.html" %}
 
-{% block title %}Turmas | Gestão Escolar{% endblock %}
+{% block title %}Turmas | Gestão Educacional{% endblock %}
 
 {% block content %}
+
 <div class="dashboard classes-page">
-    <header class="dashboard-header">
+
+<!-- =====================================================
+     CABEÇALHO
+====================================================== -->
+<header class="dashboard-header">
+
+    <div>
+
+        <p class="eyebrow">
+            Rede Municipal de Educação
+        </p>
+
+        <h1>
+            Turmas
+        </h1>
+
+        <p class="dashboard-subtitle">
+            Organização das turmas e acompanhamento dos indicadores pedagógicos.
+        </p>
+
+    </div>
+
+    <div class="profile-navigation">
+
+        <span class="header-status">
+            Estrutura escolar monitorada
+        </span>
+
+        <a
+            class="filter-reset"
+            href="{{ url_for('dashboard') }}"
+        >
+            Dashboard
+        </a>
+
+    </div>
+
+</header>
+
+{% if current_user.role == 'admin' %}
+<section class="dashboard-section management-card" aria-labelledby="new-class-title">
+    <h2 id="new-class-title">Adicionar turma</h2>
+    <form method="post" action="{{ url_for('cadastros') }}" class="management-form">
+        <input type="hidden" name="action" value="turma">
+        <input type="hidden" name="return_to" value="turmas">
+        <div class="filter-field">
+            <label for="new-class-name">Nome da turma</label>
+            <input id="new-class-name" name="name" maxlength="80" required>
+        </div>
+        <div class="filter-field">
+            <label for="new-class-school">Escola</label>
+            <select id="new-class-school" name="school_id" required>
+                <option value="">Selecione</option>
+                {% for school in management_data.schools %}
+                <option value="{{ school.id }}">{{ school.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-field">
+            <label for="new-class-year">Ano letivo</label>
+            <input id="new-class-year" name="school_year" type="number" min="2000" max="2100" required>
+        </div>
+        <div class="filter-field">
+            <label for="new-class-shift">Turno</label>
+            <select id="new-class-shift" name="shift" required>
+                <option value="">Selecione</option>
+                <option value="morning">Manhã</option>
+                <option value="afternoon">Tarde</option>
+                <option value="evening">Noite</option>
+            </select>
+        </div>
+        <button type="submit">Adicionar turma</button>
+    </form>
+</section>
+{% endif %}
+
+<!-- =====================================================
+     INDICADORES
+====================================================== -->
+<section
+    class="summary-grid class-network-summary"
+    aria-label="Resumo das turmas"
+>
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de turmas
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_classes }}
+        </p>
+
+        <span class="metric-description">
+            Turmas cadastradas na rede
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de alunos
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_students }}
+        </p>
+
+        <span class="metric-description">
+            Estudantes vinculados às turmas
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de escolas
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_schools }}
+        </p>
+
+        <span class="metric-description">
+            Unidades com turmas cadastradas
+        </span>
+
+    </article>
+
+</section>
+
+
+<!-- =====================================================
+     FILTROS
+====================================================== -->
+<section
+    class="dashboard-section class-filter-section"
+    aria-labelledby="class-filter-title"
+>
+
+    <div class="section-heading">
+
         <div>
-            <p class="eyebrow">Gestão Escolar</p>
-            <h1>Turmas</h1>
-        </div>
-        <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
-    </header>
 
-    <section class="summary-grid" aria-label="Resumo das turmas">
-        <article class="summary-card">
-            <h2>Total de turmas</h2>
-            <p class="summary-value">{{ summary.total_classes }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Total de alunos</h2>
-            <p class="summary-value">{{ summary.total_students }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Total de escolas</h2>
-            <p class="summary-value">{{ summary.total_schools }}</p>
-        </article>
-    </section>
+            <p class="eyebrow">
+                Consulta da rede
+            </p>
 
-    <section class="dashboard-section" aria-label="Filtros de turmas">
-        <form class="student-filters class-filters" method="get" action="{{ url_for('turmas') }}">
-            <div class="filter-field">
-                <label for="class-school-filter">Escola</label>
-                <select id="class-school-filter" name="escola">
-                    <option value="">Todas as escolas</option>
-                    {% for school in schools %}
-                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
-                        {{ school.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="filter-field">
-                <label for="class-name-filter">Nome da turma</label>
-                <input id="class-name-filter" name="nome" type="search" value="{{ filters.class_name }}"
-                    placeholder="Buscar turma">
-            </div>
-            <div class="filter-actions">
-                <button type="submit">Filtrar</button>
-                <a class="filter-reset" href="{{ url_for('turmas') }}">Limpar</a>
-            </div>
-        </form>
-    </section>
+            <h2 id="class-filter-title">
+                Localizar turma
+            </h2>
 
-    <section class="dashboard-section class-results" aria-labelledby="classes-table-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Organização escolar</p>
-                <h2 id="classes-table-title">Lista de turmas</h2>
-            </div>
-            <p class="results-count">{{ classes|length }} turma(s)</p>
+            <p class="section-description">
+                Utilize os filtros para encontrar rapidamente
+                uma turma ou unidade escolar.
+            </p>
+
         </div>
-        <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th scope="col">Turma</th>
-                        <th scope="col">Escola</th>
-                        <th scope="col">Alunos</th>
-                        <th scope="col">Média de desempenho</th>
-                        <th scope="col">Frequência média</th>
-                        <th scope="col">Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for class in classes %}
-                    <tr>
-                        <td class="student-name">{{ class.name }} · {{ class.school_year }}</td>
-                        <td>
-                            <a class="profile-link" href="{{ url_for('escola_detalhes', school_id=class.school_id) }}">
-                                {{ class.school_name }}
-                            </a>
-                        </td>
-                        <td>{{ class.student_count }}</td>
-                        <td>
-                            {% if class.average_grade is not none %}
-                            {{ '%.2f'|format(class.average_grade) }} / 10
-                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-                        </td>
-                        <td>
-                            {% if class.average_attendance is not none %}
-                            {{ '%.1f'|format(class.average_attendance) }}%
-                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-                        </td>
-                        <td>
-                            <a class="profile-link" href="{{ url_for('turma_detalhes', class_id=class.id) }}">
-                                Ver turma
-                            </a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="empty-state">Nenhuma turma encontrada para os filtros selecionados.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+    </div>
+
+
+    <form
+        class="student-filters class-filters"
+        method="get"
+        action="{{ url_for('turmas') }}"
+    >
+
+        <!-- Escola -->
+        <div class="filter-field">
+
+            <label for="class-school-filter">
+                Escola
+            </label>
+
+            <select
+                id="class-school-filter"
+                name="escola"
+            >
+
+                <option value="">
+                    Todas as escolas
+                </option>
+
+                {% for school in schools %}
+
+                <option
+                    value="{{ school.id }}"
+                    {% if filters.school_id == school.id|string %}
+                        selected
+                    {% endif %}
+                >
+                    {{ school.name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
         </div>
-    </section>
+
+
+        <!-- Nome -->
+        <div class="filter-field">
+
+            <label for="class-name-filter">
+                Nome da turma
+            </label>
+
+            <input
+                id="class-name-filter"
+                name="nome"
+                type="search"
+                value="{{ filters.class_name }}"
+                placeholder="Ex.: 5º Ano A"
+            >
+
+        </div>
+
+
+        <!-- Ações -->
+        <div class="filter-actions">
+
+            <button type="submit">
+                Aplicar filtros
+            </button>
+
+            <a
+                class="filter-reset"
+                href="{{ url_for('turmas') }}"
+            >
+                Limpar filtros
+            </a>
+
+        </div>
+
+    </form>
+
+</section>
+
+
+<!-- =====================================================
+     RESULTADOS
+====================================================== -->
+<section
+    class="dashboard-section class-results"
+    aria-labelledby="classes-table-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Organização escolar
+            </p>
+
+            <h2 id="classes-table-title">
+                Lista de turmas
+            </h2>
+
+        </div>
+
+
+        <div class="results-summary">
+
+            <strong>
+                {{ classes|length }}
+            </strong>
+
+            <span>
+                turma(s) encontrada(s)
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="table-scroll">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th scope="col">
+                        Turma
+                    </th>
+
+                    <th scope="col">
+                        Escola
+                    </th>
+
+                    <th scope="col">
+                        Alunos
+                    </th>
+
+                    <th scope="col">
+                        Média de desempenho
+                    </th>
+
+                    <th scope="col">
+                        Frequência média
+                    </th>
+
+                    <th scope="col">
+                        Ação
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for class in classes %}
+
+                <tr>
+
+                    <!-- Turma -->
+                    <td>
+
+                        <div class="teacher-table-identity">
+
+                            <strong class="student-name">
+                                {{ class.name }}
+                            </strong>
+
+                            <span class="table-meta-label">
+                                Ano letivo {{ class.school_year }}
+                            </span>
+
+                        </div>
+
+                    </td>
+
+
+                    <!-- Escola -->
+                    <td>
+
+                        <a
+                            class="profile-link"
+                            href="{{ url_for(
+                                'escola_detalhes',
+                                school_id=class.school_id
+                            ) }}"
+                        >
+                            {{ class.school_name }}
+                        </a>
+
+                    </td>
+
+
+                    <!-- Alunos -->
+                    <td>
+
+                        <strong>
+                            {{ class.student_count }}
+                        </strong>
+
+                        <span class="table-meta-label">
+                            estudante(s)
+                        </span>
+
+                    </td>
+
+
+                    <!-- Desempenho -->
+                    <td>
+
+                        {% if class.average_grade is not none %}
+
+                        <div class="table-metric">
+
+                            <strong>
+                                {{ '%.2f'|format(class.average_grade) }}
+                            </strong>
+
+                            <span class="value-unit">
+                                / 10
+                            </span>
+
+                        </div>
+
+                        {% else %}
+
+                        <span class="empty-value">
+                            Sem dados
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- Frequência -->
+                    <td>
+
+                        {% if class.average_attendance is not none %}
+
+                        <div class="table-metric">
+
+                            <strong>
+                                {{ '%.1f'|format(class.average_attendance) }}%
+                            </strong>
+
+                        </div>
+
+                        {% else %}
+
+                        <span class="empty-value">
+                            Sem dados
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- Ação -->
+                    <td>
+
+                        <a
+                            class="table-action-link"
+                            href="{{ url_for(
+                                'turma_detalhes',
+                                class_id=class.id
+                            ) }}"
+                        >
+                            Ver turma →
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        class="empty-state"
+                    >
+
+                        <strong>
+                            Nenhuma turma encontrada
+                        </strong>
+
+                        <span>
+                            Não existem turmas correspondentes
+                            aos filtros selecionados.
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     NAVEGAÇÃO
+====================================================== -->
+<nav
+    class="profile-bottom-navigation"
+    aria-label="Navegação de turmas"
+>
+
+    <a
+        class="back-link"
+        href="{{ url_for('dashboard') }}"
+    >
+        ← Voltar ao dashboard
+    </a>
+
+    <a
+        class="filter-reset"
+        href="{{ url_for('turmas') }}"
+    >
+        Limpar filtros
+    </a>
+
+</nav>
+
+
+<!-- =====================================================
+     RODAPÉ
+====================================================== -->
+<footer class="page-footer">
+
+    <div>
+
+        <strong>
+            Gestão Educacional Inteligente
+        </strong>
+
+        <span>
+            Organização e acompanhamento da Rede Municipal de Educação
+        </span>
+
+    </div>
+
+</footer>
+
+
 </div>
+
 {% endblock %}

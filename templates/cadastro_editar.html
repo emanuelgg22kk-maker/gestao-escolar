@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Editar cadastro | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard management-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Cadastros</p>
+            <h1>Editar registro</h1>
+        </div>
+        <a class="back-link" href="{{ url_for('cadastros') }}">Voltar aos cadastros</a>
+    </header>
+
+    {% if errors %}
+    <div class="form-errors" role="alert">
+        {% for error in errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <section class="dashboard-section management-card">
+        {% if entity == 'escola' %}
+        <form method="post" class="management-form">
+            <div class="filter-field">
+                <label for="edit-school-name">Nome da escola</label>
+                <input id="edit-school-name" name="name" value="{{ record.name }}" maxlength="160" required>
+            </div>
+            <div class="filter-field">
+                <label for="edit-school-city">Cidade</label>
+                <input id="edit-school-city" name="city" value="{{ record.city }}" maxlength="100" required>
+            </div>
+            <div class="filter-field">
+                <label for="edit-school-state">Estado (UF)</label>
+                <input id="edit-school-state" name="state" value="{{ record.state }}" maxlength="2" minlength="2" required>
+            </div>
+            <button type="submit">Salvar escola</button>
+        </form>
+        {% elif entity == 'professor' %}
+        <form method="post" class="management-form">
+            <div class="filter-field">
+                <label for="edit-teacher-name">Nome completo</label>
+                <input id="edit-teacher-name" name="full_name" value="{{ record.full_name }}" maxlength="160" required>
+            </div>
+            <div class="filter-field">
+                <label for="edit-teacher-email">E-mail</label>
+                <input id="edit-teacher-email" name="email" type="email" value="{{ record.email }}" maxlength="160" required>
+            </div>
+            {% if current_user.role == 'admin' %}
+            <div class="filter-field">
+                <label for="edit-teacher-school">Escola</label>
+                <select id="edit-teacher-school" name="school_id" required>
+                    {% for school in data.schools %}
+                    <option value="{{ school.id }}" {% if school.id == record.school_id %}selected{% endif %}>{{ school.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
+            <input type="hidden" name="school_id" value="{{ record.school_id }}">
+            {% endif %}
+            <button type="submit">Salvar professor</button>
+        </form>
+        {% elif entity == 'aluno' %}
+        <form method="post" class="management-form">
+            <div class="filter-field">
+                <label for="edit-student-name">Nome completo</label>
+                <input id="edit-student-name" name="full_name" value="{{ record.full_name }}" maxlength="160" required>
+            </div>
+            <div class="filter-field">
+                <label for="edit-student-enrollment">Número de matrícula</label>
+                <input id="edit-student-enrollment" name="enrollment_number" value="{{ record.enrollment_number }}" maxlength="60" required>
+            </div>
+            <div class="filter-field">
+                <label for="edit-student-birth-date">Data de nascimento</label>
+                <input id="edit-student-birth-date" name="birth_date" type="date" value="{{ record.birth_date or '' }}">
+            </div>
+            <div class="filter-field">
+                <label for="edit-student-class">Turma e escola</label>
+                <select id="edit-student-class" name="class_id" required>
+                    {% for class in data.classes %}
+                    <option value="{{ class.id }}" {% if class.id == record.class_id %}selected{% endif %}>{{ class.name }} · {{ class.school_name }} · {{ class.school_year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">Salvar aluno</button>
+        </form>
+        {% else %}
+        <form method="post" class="management-form">
+            <div class="filter-field">
+                <label for="edit-subject-name">Nome da disciplina</label>
+                <input id="edit-subject-name" name="name" value="{{ record.name }}" maxlength="120" required>
+            </div>
+            <button type="submit">Salvar disciplina</button>
+        </form>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

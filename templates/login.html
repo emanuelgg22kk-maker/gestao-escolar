@@ -1,29 +1,250 @@
 {% extends "base.html" %}
 
-{% block title %}Acesso ao sistema | Gestão Escolar{% endblock %}
+{% block title %}Acesso ao sistema | Gestão Educacional{% endblock %}
 
 {% block content %}
+
 <div class="login-page">
-    <section class="login-panel" aria-labelledby="login-title">
-        <p class="login-brand">GESTÃO ESCOLAR</p>
-        <p class="eyebrow">Acesso restrito</p>
-        <h1 id="login-title">Acesso ao sistema</h1>
 
-        {% if error %}
-        <p class="login-error" role="alert">{{ error }}</p>
-        {% endif %}
+<!-- =====================================================
+     PAINEL DE IDENTIDADE
+====================================================== -->
+<section
+    class="login-panel"
+    aria-labelledby="login-title"
+>
 
-        <form class="login-form" method="post" action="{{ url_for('login') }}">
-            <div class="filter-field">
-                <label for="username">Usuário</label>
-                <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+    <div class="login-brand-area">
+
+        <div class="login-municipal-mark">
+
+            <span>
+                LAGOA DO
+            </span>
+
+            <strong>
+                CARRO
+            </strong>
+
+            <small>
+                PERNAMBUCO
+            </small>
+
+        </div>
+
+
+        <div>
+
+            <p class="login-brand">
+                GESTÃO EDUCACIONAL
+            </p>
+
+            <p class="login-brand-subtitle">
+                Rede Municipal de Educação
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         TÍTULO
+    ================================================== -->
+    <div class="login-heading">
+
+        <p class="eyebrow">
+            Acesso restrito
+        </p>
+
+        <h1 id="login-title">
+            Acesso ao sistema
+        </h1>
+
+        <p>
+            Entre com suas credenciais para acessar a plataforma de gestão educacional.
+        </p>
+
+    </div>
+
+
+    <!-- =================================================
+         ERRO
+    ================================================== -->
+    {% if error %}
+
+    <div
+        class="login-error"
+        role="alert"
+    >
+
+        <strong>
+            Não foi possível entrar
+        </strong>
+
+        <span>
+            {{ error }}
+        </span>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- =================================================
+         FORMULÁRIO
+    ================================================== -->
+    <form
+        class="login-form"
+        method="post"
+        action="{{ url_for('login') }}"
+    >
+
+        <div class="filter-field">
+
+            <label for="username">
+                Usuário
+            </label>
+
+            <input
+                id="username"
+                name="username"
+                type="text"
+                autocomplete="username"
+                placeholder="Digite seu usuário"
+                required
+                autofocus
+            >
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="password">
+                Senha
+            </label>
+
+            <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Digite sua senha"
+                required
+            >
+
+        </div>
+
+
+        <button
+            class="login-button"
+            type="submit"
+        >
+            Entrar no sistema
+        </button>
+
+    </form>
+
+
+    <!-- =================================================
+         INFORMAÇÕES INSTITUCIONAIS
+    ================================================== -->
+    <div class="login-information">
+
+        <div>
+
+            <strong>
+                Plataforma de Gestão Educacional
+            </strong>
+
+            <span>
+                Secretaria Municipal de Educação
+            </span>
+
+        </div>
+
+        <span>
+            Ambiente seguro e restrito
+        </span>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     IDENTIDADE LATERAL
+====================================================== -->
+<aside
+    class="login-aside"
+    aria-label="Informações da plataforma"
+>
+
+    <div class="login-aside-content">
+
+        <p class="eyebrow">
+            Rede Municipal
+        </p>
+
+        <h2>
+            Gestão educacional orientada por dados.
+        </h2>
+
+        <p>
+            Acompanhe alunos, escolas, frequência, desempenho,
+            materiais didáticos, alertas e comunicação
+            em um único ambiente.
+        </p>
+
+
+        <div class="login-feature-list">
+
+            <div class="login-feature">
+
+                <strong>
+                    Acompanhamento
+                </strong>
+
+                <span>
+                    Indicadores para apoiar o acompanhamento dos estudantes.
+                </span>
+
             </div>
-            <div class="filter-field">
-                <label for="password">Senha</label>
-                <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+
+            <div class="login-feature">
+
+                <strong>
+                    Inteligência
+                </strong>
+
+                <span>
+                    Dados organizados para apoiar decisões pedagógicas.
+                </span>
+
             </div>
-            <button class="login-button" type="submit">Entrar</button>
-        </form>
-    </section>
+
+
+            <div class="login-feature">
+
+                <strong>
+                    Integração
+                </strong>
+
+                <span>
+                    Informações da rede reunidas em uma única plataforma.
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</aside>
+
+
 </div>
+
 {% endblock %}

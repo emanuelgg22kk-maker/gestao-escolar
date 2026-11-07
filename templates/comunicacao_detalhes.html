@@ -3,63 +3,307 @@
 {% block title %}{{ communication.subject }} | Comunicação{% endblock %}
 
 {% block content %}
+
 <div class="dashboard communication-detail-page">
-    <header class="dashboard-header profile-header">
+
+
+<!-- =====================================================
+     CABEÇALHO
+====================================================== -->
+<header class="dashboard-header profile-header">
+
+    <div>
+
+        <p class="eyebrow">
+            Comunicação institucional
+            ·
+            {{ communication.type_label }}
+            ·
+            {{ communication.direction_label }}
+        </p>
+
+        <h1>
+            {{ communication.subject }}
+        </h1>
+
+        <p class="profile-meta">
+            {% if communication.direction == 'received' %}
+            De: {{ communication.sender_username or communication.recipient }}
+            {% else %}
+            Para: {{ communication.recipient }}
+            {% endif %}
+        </p>
+
+    </div>
+
+
+    <div class="profile-navigation">
+
+        <a
+            class="back-link"
+            href="{{ url_for('comunicacao') }}"
+        >
+            ← Voltar para comunicações
+        </a>
+
+        <a
+            class="filter-reset"
+            href="{{ url_for('dashboard') }}"
+        >
+            Dashboard
+        </a>
+
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+     RESUMO DA COMUNICAÇÃO
+====================================================== -->
+<section
+    class="summary-grid communication-detail-summary"
+    aria-label="Resumo da comunicação"
+>
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Tipo
+        </span>
+
+        <h2>
+            {{ communication.type_label }}
+        </h2>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Direção
+        </span>
+
+        <h2>
+            {{ communication.direction_label }}
+        </h2>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Escola
+        </span>
+
+        <h2>
+
+            {% if communication.school_id %}
+
+            <a
+                class="profile-link"
+                href="{{ url_for('escola_detalhes', school_id=communication.school_id) }}"
+            >
+                {{ communication.school_name }}
+            </a>
+
+            {% else %}
+
+            <span class="text-muted">
+                Sem escola específica
+            </span>
+
+            {% endif %}
+
+        </h2>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Status
+        </span>
+
+        <h2>
+
+            <span
+                class="communication-status communication-status--{{ communication.status }}"
+            >
+                {{ communication.status_label }}
+            </span>
+
+        </h2>
+
+    </article>
+
+</section>
+
+
+<!-- =====================================================
+     DESTINATÁRIO
+====================================================== -->
+<section
+    class="dashboard-section communication-recipient-card"
+    aria-labelledby="communication-recipient-title"
+>
+
+    <div class="section-heading">
+
         <div>
-            <p class="eyebrow">{{ communication.type_label }} · {{ communication.direction_label }}</p>
-            <h1>{{ communication.subject }}</h1>
-            <p class="profile-meta">Destinatário: {{ communication.recipient }}</p>
-        </div>
-        <div class="profile-navigation">
-            <a class="back-link" href="{{ url_for('comunicacao') }}">Voltar para comunicações</a>
-            <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
-        </div>
-    </header>
 
-    <section class="summary-grid communication-detail-summary" aria-label="Dados da comunicação">
-        <article class="summary-card">
-            <h2>Tipo</h2>
-            <p class="planning-detail-value">{{ communication.type_label }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Direção</h2>
-            <p class="planning-detail-value">{{ communication.direction_label }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Escola</h2>
-            <p class="planning-detail-value">
-                {% if communication.school_id %}
-                <a class="profile-link" href="{{ url_for('escola_detalhes', school_id=communication.school_id) }}">
-                    {{ communication.school_name }}
-                </a>
-                {% else %}Sem escola específica{% endif %}
+            <p class="eyebrow">
+                Identificação
             </p>
-        </article>
-        <article class="summary-card">
-            <h2>Status</h2>
-            <p class="planning-detail-value">
-                <span class="communication-status communication-status--{{ communication.status }}">
-                    {{ communication.status_label }}
-                </span>
-            </p>
-        </article>
-    </section>
 
-    <section class="dashboard-section communication-message-section" aria-labelledby="message-content-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">{{ communication.created_at }}</p>
-                <h2 id="message-content-title">Mensagem</h2>
-            </div>
+            <h2 id="communication-recipient-title">Participantes</h2>
+
         </div>
-        <div class="communication-message-content">{{ communication.message }}</div>
-        {% if communication.direction == 'received' and communication.status == 'unread' %}
-        <form method="post" action="{{ url_for('marcar_comunicacao_lida', communication_id=communication.id) }}">
-            <div class="filter-actions communication-form-actions">
-                <button type="submit">Marcar como lida</button>
-            </div>
-        </form>
+
+    </div>
+
+
+    <div class="communication-recipient-content">
+
+        <div>
+
+            <span class="metric-label">
+                {% if communication.direction == 'received' %}Mensagem recebida de{% else %}Mensagem enviada para{% endif %}
+            </span>
+
+            <strong>
+                {% if communication.direction == 'received' %}
+                {{ communication.sender_username or communication.recipient }}
+                {% else %}
+                {{ communication.recipient }}
+                {% endif %}
+            </strong>
+
+        </div>
+
+
+        {% if communication.school_id %}
+
+        <div>
+
+            <span class="metric-label">
+                Unidade escolar
+            </span>
+
+            <a
+                class="profile-link"
+                href="{{ url_for('escola_detalhes', school_id=communication.school_id) }}"
+            >
+                {{ communication.school_name }}
+            </a>
+
+        </div>
+
         {% endif %}
-    </section>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     MENSAGEM
+====================================================== -->
+<section
+    class="dashboard-section communication-message-section"
+    aria-labelledby="message-content-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                {{ communication.created_at }}
+            </p>
+
+            <h2 id="message-content-title">
+                Conteúdo da comunicação
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="communication-message-content">
+        {{ communication.message }}
+    </div>
+
+
+    {% if communication.direction == 'received'
+    and communication.status == 'unread' %}
+
+    <form
+        method="post"
+        action="{{ url_for('marcar_comunicacao_lida', communication_id=communication.id) }}"
+    >
+
+        <div class="filter-actions communication-form-actions">
+
+            <button type="submit">
+                Marcar como lida
+            </button>
+
+        </div>
+
+    </form>
+
+    {% endif %}
+
+</section>
+
+
+<!-- =====================================================
+     NAVEGAÇÃO FINAL
+====================================================== -->
+<div class="profile-navigation communication-detail-footer">
+
+    <a
+        class="back-link"
+        href="{{ url_for('comunicacao') }}"
+    >
+        ← Todas as comunicações
+    </a>
+
+    <a
+        class="filter-reset"
+        href="{{ url_for('dashboard') }}"
+    >
+        Ir para Dashboard
+    </a>
+
 </div>
+
+
+<!-- =====================================================
+     RODAPÉ DA PÁGINA
+====================================================== -->
+<footer class="page-footer">
+
+    <div>
+
+        <strong>
+            Gestão Educacional Inteligente
+        </strong>
+
+        <span>
+            Comunicação da Rede Municipal de Educação
+        </span>
+
+    </div>
+
+</footer>
+
+
+</div>
+
 {% endblock %}

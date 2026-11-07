@@ -1,110 +1,473 @@
 {% extends "base.html" %}
 
-{% block title %}Professores | Gestão Escolar{% endblock %}
+{% block title %}Professores | Gestão Educacional{% endblock %}
 
 {% block content %}
+
 <div class="dashboard teachers-page">
-    <header class="dashboard-header">
+
+
+<!-- =====================================================
+     CABEÇALHO
+====================================================== -->
+<header class="dashboard-header">
+
+    <div>
+
+        <p class="eyebrow">
+            Rede Municipal de Educação
+        </p>
+
+        <h1>
+            Professores
+        </h1>
+
+        <p class="dashboard-subtitle">
+            Acompanhe a equipe docente, suas unidades de atuação,
+            turmas e disciplinas vinculadas.
+        </p>
+
+    </div>
+
+
+    <div class="profile-navigation">
+
+        <span class="dashboard-status">
+            <span class="status-dot"></span>
+            Equipe docente monitorada
+        </span>
+
+        <a
+            class="filter-reset"
+            href="{{ url_for('dashboard') }}"
+        >
+            Dashboard
+        </a>
+
+    </div>
+
+</header>
+
+{% if current_user.role in ('admin', 'diretor') %}
+<section class="dashboard-section management-card" aria-labelledby="new-teacher-title">
+    <h2 id="new-teacher-title">Adicionar professor</h2>
+    <form method="post" action="{{ url_for('cadastros') }}" class="management-form">
+        <input type="hidden" name="action" value="professor">
+        <input type="hidden" name="return_to" value="professores">
+        <div class="filter-field">
+            <label for="new-teacher-name">Nome completo</label>
+            <input id="new-teacher-name" name="full_name" maxlength="160" required>
+        </div>
+        <div class="filter-field">
+            <label for="new-teacher-email">E-mail</label>
+            <input id="new-teacher-email" name="email" type="email" maxlength="160" required>
+        </div>
+        {% if current_user.role == 'admin' %}
+        <div class="filter-field">
+            <label for="new-teacher-school">Escola</label>
+            <select id="new-teacher-school" name="school_id" required>
+                <option value="">Selecione</option>
+                {% for school in management_data.schools %}
+                <option value="{{ school.id }}">{{ school.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% else %}
+        <p class="data-note">Escola vinculada: {{ management_data.schools[0].name }}</p>
+        {% endif %}
+        <button type="submit">Adicionar professor</button>
+    </form>
+</section>
+{% endif %}
+
+<!-- =====================================================
+     INDICADORES
+====================================================== -->
+<section
+    class="summary-grid teacher-summary-grid"
+    aria-label="Resumo dos professores"
+>
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de professores
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_teachers }}
+        </p>
+
+        <span class="metric-description">
+            Profissionais cadastrados na rede
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Escolas atendidas
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_schools }}
+        </p>
+
+        <span class="metric-description">
+            Unidades com equipe docente
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Turmas relacionadas
+        </span>
+
+        <p class="summary-value">
+            {{ summary.related_classes }}
+        </p>
+
+        <span class="metric-description">
+            Turmas vinculadas aos professores
+        </span>
+
+    </article>
+
+</section>
+
+
+<!-- =====================================================
+     FILTROS
+====================================================== -->
+<section
+    class="dashboard-section teacher-filter-section"
+    aria-label="Filtros de professores"
+>
+
+    <div class="section-heading">
+
         <div>
-            <p class="eyebrow">Gestão Escolar</p>
-            <h1>Professores</h1>
-        </div>
-        <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
-    </header>
 
-    <section class="summary-grid" aria-label="Resumo dos professores">
-        <article class="summary-card">
-            <h2>Total de professores</h2>
-            <p class="summary-value">{{ summary.total_teachers }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Total de escolas</h2>
-            <p class="summary-value">{{ summary.total_schools }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Turmas relacionadas</h2>
-            <p class="summary-value">{{ summary.related_classes }}</p>
-        </article>
-    </section>
+            <p class="eyebrow">
+                Consulta da equipe
+            </p>
 
-    <section class="dashboard-section" aria-label="Filtros de professores">
-        <form class="student-filters teacher-filters" method="get" action="{{ url_for('professores') }}">
-            <div class="filter-field">
-                <label for="teacher-school-filter">Escola</label>
-                <select id="teacher-school-filter" name="escola">
-                    <option value="">Todas as escolas</option>
-                    {% for school in schools %}
-                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
-                        {{ school.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="filter-field">
-                <label for="teacher-name-filter">Nome do professor</label>
-                <input id="teacher-name-filter" name="nome" type="search" value="{{ filters.teacher_name }}"
-                    placeholder="Buscar professor">
-            </div>
-            <div class="filter-actions">
-                <button type="submit">Filtrar</button>
-                <a class="filter-reset" href="{{ url_for('professores') }}">Limpar</a>
-            </div>
-        </form>
-    </section>
+            <h2>
+                Localizar professor
+            </h2>
 
-    <section class="dashboard-section teacher-results" aria-labelledby="teachers-table-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Equipe escolar</p>
-                <h2 id="teachers-table-title">Lista de professores</h2>
-            </div>
-            <p class="results-count">{{ teachers|length }} professor(es)</p>
         </div>
-        <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th scope="col">Professor</th>
-                        <th scope="col">Escola</th>
-                        <th scope="col">Turmas relacionadas</th>
-                        <th scope="col">Disciplinas</th>
-                        <th scope="col">Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for teacher in teachers %}
-                    <tr>
-                        <td class="student-name">{{ teacher.full_name }}</td>
-                        <td>
-                            <a class="profile-link"
-                                href="{{ url_for('escola_detalhes', school_id=teacher.school_id) }}">
-                                {{ teacher.school_name }}
-                            </a>
-                        </td>
-                        <td>{{ teacher.class_count }}</td>
-                        <td>
-                            {% if teacher.subjects %}
-                            {% for subject in teacher.subjects %}{{ subject }}{% if not loop.last %}, {% endif %}{%
-                            endfor %}
-                            {% else %}
-                            <span class="empty-value">Sem disciplinas vinculadas</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a class="profile-link" href="{{ url_for('professor_detalhes', teacher_id=teacher.id) }}">
-                                Ver detalhes
-                            </a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="empty-state">Nenhum professor encontrado para os filtros selecionados.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+        <p class="section-description">
+            Consulte os profissionais por unidade escolar ou nome.
+        </p>
+
+    </div>
+
+
+    <form
+        class="student-filters teacher-filters"
+        method="get"
+        action="{{ url_for('professores') }}"
+    >
+
+        <!-- Escola -->
+        <div class="filter-field">
+
+            <label for="teacher-school-filter">
+                Escola
+            </label>
+
+            <select
+                id="teacher-school-filter"
+                name="escola"
+            >
+
+                <option value="">
+                    Todas as escolas
+                </option>
+
+                {% for school in schools %}
+
+                <option
+                    value="{{ school.id }}"
+                    {% if filters.school_id == school.id|string %}selected{% endif %}
+                >
+                    {{ school.name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
         </div>
-    </section>
+
+
+        <!-- Nome -->
+        <div class="filter-field">
+
+            <label for="teacher-name-filter">
+                Nome do professor
+            </label>
+
+            <input
+                id="teacher-name-filter"
+                name="nome"
+                type="search"
+                value="{{ filters.teacher_name }}"
+                placeholder="Digite o nome do professor"
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <!-- Ações -->
+        <div class="filter-actions">
+
+            <button type="submit">
+                Filtrar professores
+            </button>
+
+            <a
+                class="filter-reset"
+                href="{{ url_for('professores') }}"
+            >
+                Limpar filtros
+            </a>
+
+        </div>
+
+    </form>
+
+</section>
+
+
+<!-- =====================================================
+     LISTA DE PROFESSORES
+====================================================== -->
+<section
+    class="dashboard-section teacher-results"
+    aria-labelledby="teachers-table-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Equipe escolar
+            </p>
+
+            <h2 id="teachers-table-title">
+                Lista de professores
+            </h2>
+
+        </div>
+
+
+        <div class="results-summary">
+
+            <strong>
+                {{ teachers|length }}
+            </strong>
+
+            <span>
+                professor(es) encontrado(s)
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="table-scroll">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th scope="col">
+                        Professor
+                    </th>
+
+                    <th scope="col">
+                        Escola
+                    </th>
+
+                    <th scope="col">
+                        Turmas
+                    </th>
+
+                    <th scope="col">
+                        Disciplinas
+                    </th>
+
+                    <th scope="col">
+                        Ação
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for teacher in teachers %}
+
+                <tr>
+
+                    <!-- Professor -->
+                    <td>
+
+                        <div class="teacher-table-identity">
+
+                            <strong class="student-name">
+                                {{ teacher.full_name }}
+                            </strong>
+
+                            <span class="table-meta-label">
+                                Professor da rede municipal
+                            </span>
+
+                        </div>
+
+                    </td>
+
+
+                    <!-- Escola -->
+                    <td>
+
+                        <a
+                            class="profile-link"
+                            href="{{ url_for(
+                                'escola_detalhes',
+                                school_id=teacher.school_id
+                            ) }}"
+                        >
+                            {{ teacher.school_name }}
+                        </a>
+
+                    </td>
+
+
+                    <!-- Turmas -->
+                    <td>
+
+                        <span class="teacher-class-count">
+                            {{ teacher.class_count }}
+                        </span>
+
+                    </td>
+
+
+                    <!-- Disciplinas -->
+                    <td>
+
+                        {% if teacher.subjects %}
+
+                        <div class="teacher-subject-tags">
+
+                            {% for subject in teacher.subjects %}
+
+                            <span class="teacher-subject-tag">
+                                {{ subject }}
+                            </span>
+
+                            {% endfor %}
+
+                        </div>
+
+                        {% else %}
+
+                        <span class="empty-value">
+                            Sem disciplinas vinculadas
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- Ação -->
+                    <td>
+
+                        <a
+                            class="table-action-link"
+                            href="{{ url_for(
+                                'professor_detalhes',
+                                teacher_id=teacher.id
+                            ) }}"
+                        >
+                            Ver detalhes →
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="empty-state"
+                    >
+
+                        <strong>
+                            Nenhum professor encontrado
+                        </strong>
+
+                        <span>
+                            Não existem professores correspondentes
+                            aos filtros selecionados.
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     RODAPÉ
+====================================================== -->
+<footer class="page-footer">
+
+    <div>
+
+        <strong>
+            Gestão Educacional Inteligente
+        </strong>
+
+        <span>
+            Equipe docente da Rede Municipal de Educação
+        </span>
+
+    </div>
+
+</footer>
+
+
 </div>
+
 {% endblock %}

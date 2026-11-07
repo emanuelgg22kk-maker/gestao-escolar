@@ -1,88 +1,439 @@
 {% extends "base.html" %}
 
-{% block title %}{{ teacher.full_name }} | Gestão Escolar{% endblock %}
+{% block title %}{{ teacher.full_name }} | Gestão Educacional{% endblock %}
 
 {% block content %}
+
 <div class="dashboard teacher-detail-page">
-    <header class="dashboard-header profile-header">
-        <div>
-            <p class="eyebrow">Detalhes do professor</p>
-            <h1>{{ teacher.full_name }}</h1>
-            <p class="profile-meta">
-                <a class="profile-link" href="{{ url_for('escola_detalhes', school_id=teacher.school_id) }}">
-                    {{ teacher.school_name }}
-                </a>
-            </p>
-        </div>
-        <div class="profile-navigation">
-            <a class="back-link" href="{{ url_for('professores') }}">Voltar para professores</a>
-            <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
-        </div>
-    </header>
 
-    <section class="dashboard-section teacher-detail-section" aria-labelledby="teacher-classes-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Vínculos existentes</p>
-                <h2 id="teacher-classes-title">Turmas relacionadas</h2>
-            </div>
-            <p class="results-count">{{ classes|length }} turma(s)</p>
-        </div>
-        <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th scope="col">Turma</th>
-                        <th scope="col">Ano</th>
-                        <th scope="col">Turno</th>
-                        <th scope="col">Alunos</th>
-                        <th scope="col">Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for class in classes %}
-                    <tr>
-                        <td class="student-name">{{ class.name }}</td>
-                        <td>{{ class.school_year }}</td>
-                        <td>{{ class.shift_label }}</td>
-                        <td>{{ class.student_count }}</td>
-                        <td>
-                            <a class="profile-link" href="{{ url_for('turma_detalhes', class_id=class.id) }}">
-                                Ver turma
-                            </a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="empty-state">Nenhuma turma vinculada a este professor.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
 
-    <section class="dashboard-section teacher-detail-section" aria-labelledby="teacher-subjects-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Vínculos existentes</p>
-                <h2 id="teacher-subjects-title">Disciplinas relacionadas</h2>
-            </div>
-            <p class="results-count">{{ subjects|length }} disciplina(s)</p>
-        </div>
-        {% if subjects %}
-        <ul class="teacher-subject-list">
-            {% for subject in subjects %}
-            <li>{{ subject.name }}</li>
+<!-- =====================================================
+     CABEÇALHO DO PROFESSOR
+====================================================== -->
+<header class="dashboard-header profile-header">
+
+    <div>
+
+        <p class="eyebrow">
+            Rede Municipal de Educação
+        </p>
+
+        <h1>
+            {{ teacher.full_name }}
+        </h1>
+
+        <p class="profile-meta">
+
+            <span>
+                Professor da unidade
+            </span>
+
+            <span>
+                ·
+            </span>
+
+            <a
+                class="profile-link"
+                href="{{ url_for(
+                    'escola_detalhes',
+                    school_id=teacher.school_id
+                ) }}"
+            >
+                {{ teacher.school_name }}
+            </a>
+
+        </p>
+
+    </div>
+
+
+    <div class="profile-navigation">
+
+        <a
+            class="back-link"
+            href="{{ url_for('professores') }}"
+        >
+            ← Voltar para professores
+        </a>
+
+        <a
+            class="filter-reset"
+            href="{{ url_for('dashboard') }}"
+        >
+            Dashboard
+        </a>
+
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+     RESUMO DO PROFESSOR
+====================================================== -->
+<section
+    class="summary-grid teacher-detail-summary"
+    aria-label="Resumo do professor"
+>
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Turmas vinculadas
+        </span>
+
+        <p class="summary-value">
+            {{ classes|length }}
+        </p>
+
+        <span class="metric-description">
+            Turmas sob responsabilidade
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Disciplinas
+        </span>
+
+        <p class="summary-value">
+            {{ subjects|length }}
+        </p>
+
+        <span class="metric-description">
+            Componentes curriculares relacionados
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Alunos acompanhados
+        </span>
+
+        <p class="summary-value">
+            {% set total_students = namespace(value=0) %}
+            {% for class in classes %}
+                {% set total_students.value = total_students.value + class.student_count %}
             {% endfor %}
-        </ul>
-        {% else %}
-        <p class="empty-state">Nenhuma disciplina vinculada a este professor.</p>
-        {% endif %}
-    </section>
+            {{ total_students.value }}
+        </p>
 
-    <nav class="profile-bottom-navigation" aria-label="Navegação do professor">
-        <a class="back-link" href="{{ url_for('professores') }}">Voltar para professores</a>
-    </nav>
+        <span class="metric-description">
+            Estimativa pelo total de alunos das turmas
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Unidade escolar
+        </span>
+
+        <p class="teacher-school-value">
+
+            <a
+                class="profile-link"
+                href="{{ url_for(
+                    'escola_detalhes',
+                    school_id=teacher.school_id
+                ) }}"
+            >
+                {{ teacher.school_name }}
+            </a>
+
+        </p>
+
+        <span class="metric-description">
+            Escola de atuação
+        </span>
+
+    </article>
+
+</section>
+
+
+<!-- =====================================================
+     TURMAS
+====================================================== -->
+<section
+    class="dashboard-section teacher-detail-section"
+    aria-labelledby="teacher-classes-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Vínculos pedagógicos
+            </p>
+
+            <h2 id="teacher-classes-title">
+                Turmas relacionadas
+            </h2>
+
+        </div>
+
+        <div class="results-summary">
+
+            <strong>
+                {{ classes|length }}
+            </strong>
+
+            <span>
+                turma(s)
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="table-scroll">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th scope="col">
+                        Turma
+                    </th>
+
+                    <th scope="col">
+                        Ano
+                    </th>
+
+                    <th scope="col">
+                        Turno
+                    </th>
+
+                    <th scope="col">
+                        Alunos
+                    </th>
+
+                    <th scope="col">
+                        Ação
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for class in classes %}
+
+                <tr>
+
+                    <td>
+
+                        <strong class="student-name">
+                            {{ class.name }}
+                        </strong>
+
+                    </td>
+
+                    <td>
+                        {{ class.school_year }}
+                    </td>
+
+                    <td>
+                        {{ class.shift_label }}
+                    </td>
+
+                    <td>
+
+                        <span class="table-metric-value">
+                            {{ class.student_count }}
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <a
+                            class="table-action-link"
+                            href="{{ url_for(
+                                'turma_detalhes',
+                                class_id=class.id
+                            ) }}"
+                        >
+                            Ver turma →
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="empty-state"
+                    >
+
+                        <strong>
+                            Nenhuma turma vinculada
+                        </strong>
+
+                        <span>
+                            Este professor ainda não possui
+                            turmas relacionadas no sistema.
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     DISCIPLINAS
+====================================================== -->
+<section
+    class="dashboard-section teacher-detail-section"
+    aria-labelledby="teacher-subjects-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Componentes curriculares
+            </p>
+
+            <h2 id="teacher-subjects-title">
+                Disciplinas relacionadas
+            </h2>
+
+        </div>
+
+        <div class="results-summary">
+
+            <strong>
+                {{ subjects|length }}
+            </strong>
+
+            <span>
+                disciplina(s)
+            </span>
+
+        </div>
+
+    </div>
+
+
+    {% if subjects %}
+
+    <ul class="teacher-subject-list">
+
+        {% for subject in subjects %}
+
+        <li>
+
+            <span class="subject-list-marker">
+                {{ loop.index }}
+            </span>
+
+            <strong>
+                {{ subject.name }}
+            </strong>
+
+        </li>
+
+        {% endfor %}
+
+    </ul>
+
+    {% else %}
+
+    <div class="empty-state">
+
+        <strong>
+            Nenhuma disciplina vinculada
+        </strong>
+
+        <span>
+            Não existem disciplinas relacionadas
+            a este professor.
+        </span>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+
+<!-- =====================================================
+     NAVEGAÇÃO
+====================================================== -->
+<nav
+    class="profile-bottom-navigation"
+    aria-label="Navegação do professor"
+>
+
+    <a
+        class="back-link"
+        href="{{ url_for('professores') }}"
+    >
+        ← Voltar para professores
+    </a>
+
+    <a
+        class="filter-reset"
+        href="{{ url_for('dashboard') }}"
+    >
+        Dashboard
+    </a>
+
+</nav>
+
+
+<!-- =====================================================
+     RODAPÉ
+====================================================== -->
+<footer class="page-footer">
+
+    <div>
+
+        <strong>
+            Gestão Educacional Inteligente
+        </strong>
+
+        <span>
+            Rede Municipal de Educação de Lagoa do Carro
+        </span>
+
+    </div>
+
+</footer>
+
+
 </div>
+
 {% endblock %}

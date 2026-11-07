@@ -1,88 +1,373 @@
 {% extends "base.html" %}
 
-{% block title %}Escolas | Gestão Escolar{% endblock %}
+{% block title %}Escolas | Gestão Educacional{% endblock %}
 
 {% block content %}
+
 <div class="dashboard schools-page">
-    <header class="dashboard-header">
+
+
+<!-- =====================================================
+     CABEÇALHO
+====================================================== -->
+<header class="dashboard-header">
+
+    <div>
+
+        <p class="eyebrow">
+            Rede Municipal de Educação
+        </p>
+
+        <h1>
+            Escolas
+        </h1>
+
+        <p class="dashboard-context">
+            Acompanhe as unidades escolares e seus principais indicadores educacionais.
+        </p>
+
+    </div>
+
+
+    <div class="profile-navigation">
+
+        <a
+            class="filter-reset"
+            href="{{ url_for('dashboard') }}"
+        >
+            Dashboard
+        </a>
+
+    </div>
+
+</header>
+
+{% if current_user.role == 'admin' %}
+<section class="dashboard-section management-card" aria-labelledby="new-school-title">
+    <h2 id="new-school-title">Adicionar escola</h2>
+    {% if errors %}
+    <div class="form-errors" role="alert">
+        {% for error in errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    <form method="post" action="{{ url_for('escolas') }}" class="management-form">
+        <div class="filter-field">
+            <label for="school-name">Nome da escola</label>
+            <input id="school-name" name="name" maxlength="160" required>
+        </div>
+        <div class="filter-field">
+            <label for="school-city">Cidade</label>
+            <input id="school-city" name="city" maxlength="100" required>
+        </div>
+        <div class="filter-field">
+            <label for="school-state">Estado (UF)</label>
+            <input id="school-state" name="state" maxlength="2" minlength="2" required>
+        </div>
+        <button type="submit">Adicionar escola</button>
+    </form>
+</section>
+{% endif %}
+
+<!-- =====================================================
+     INDICADORES DA REDE
+====================================================== -->
+<section
+    class="summary-grid school-network-summary"
+    aria-label="Resumo da rede escolar"
+>
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de escolas
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_schools }}
+        </p>
+
+        <p class="metric-description">
+            Unidades da rede municipal
+        </p>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de alunos
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_students }}
+        </p>
+
+        <p class="metric-description">
+            Estudantes matriculados
+        </p>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de turmas
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_classes }}
+        </p>
+
+        <p class="metric-description">
+            Turmas cadastradas
+        </p>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de professores
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_teachers }}
+        </p>
+
+        <p class="metric-description">
+            Profissionais vinculados
+        </p>
+
+    </article>
+
+</section>
+
+
+<!-- =====================================================
+     LISTAGEM DAS ESCOLAS
+====================================================== -->
+<section
+    class="dashboard-section school-results"
+    aria-labelledby="schools-table-title"
+>
+
+    <div class="section-heading">
+
         <div>
-            <p class="eyebrow">Gestão Escolar</p>
-            <h1>Escolas</h1>
-        </div>
-        <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
-    </header>
 
-    <section class="summary-grid" aria-label="Resumo da rede escolar">
-        <article class="summary-card">
-            <h2>Total de escolas</h2>
-            <p class="summary-value">{{ summary.total_schools }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Total de alunos</h2>
-            <p class="summary-value">{{ summary.total_students }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Total de turmas</h2>
-            <p class="summary-value">{{ summary.total_classes }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Total de professores</h2>
-            <p class="summary-value">{{ summary.total_teachers }}</p>
-        </article>
-    </section>
+            <p class="eyebrow">
+                Visão da rede
+            </p>
 
-    <section class="dashboard-section school-results" aria-labelledby="schools-table-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Rede escolar</p>
-                <h2 id="schools-table-title">Lista de escolas</h2>
-            </div>
-            <p class="results-count">{{ schools|length }} escola(s)</p>
+            <h2 id="schools-table-title">
+                Unidades escolares
+            </h2>
+
         </div>
-        <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th scope="col">Escola</th>
-                        <th scope="col">Alunos</th>
-                        <th scope="col">Turmas</th>
-                        <th scope="col">Professores</th>
-                        <th scope="col">Média de desempenho</th>
-                        <th scope="col">Frequência média</th>
-                        <th scope="col">Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for school in schools %}
-                    <tr>
-                        <td class="student-name">{{ school.name }}</td>
-                        <td>{{ school.student_count }}</td>
-                        <td>{{ school.class_count }}</td>
-                        <td>{{ school.teacher_count }}</td>
-                        <td>
-                            {% if school.average_grade is not none %}
-                            {{ '%.2f'|format(school.average_grade) }} / 10
-                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-                        </td>
-                        <td>
-                            {% if school.average_attendance is not none %}
-                            {{ '%.1f'|format(school.average_attendance) }}%
-                            {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-                        </td>
-                        <td>
-                            <a class="profile-link" href="{{ url_for('escola_detalhes', school_id=school.id) }}">
-                                Ver detalhes
-                            </a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="7" class="empty-state">Nenhuma escola cadastrada.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
+
+        <p class="results-count">
+            {{ schools|length }} escola(s)
+        </p>
+
+    </div>
+
+
+    <div class="table-scroll">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th scope="col">
+                        Escola
+                    </th>
+
+                    <th scope="col">
+                        Alunos
+                    </th>
+
+                    <th scope="col">
+                        Turmas
+                    </th>
+
+                    <th scope="col">
+                        Professores
+                    </th>
+
+                    <th scope="col">
+                        Média de desempenho
+                    </th>
+
+                    <th scope="col">
+                        Frequência média
+                    </th>
+
+                    <th scope="col">
+                        Ação
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for school in schools %}
+
+                <tr>
+
+                    <!-- ESCOLA -->
+                    <td class="student-name">
+
+                        {{ school.name }}
+
+                    </td>
+
+
+                    <!-- ALUNOS -->
+                    <td>
+
+                        {{ school.student_count }}
+
+                    </td>
+
+
+                    <!-- TURMAS -->
+                    <td>
+
+                        {{ school.class_count }}
+
+                    </td>
+
+
+                    <!-- PROFESSORES -->
+                    <td>
+
+                        {{ school.teacher_count }}
+
+                    </td>
+
+
+                    <!-- DESEMPENHO -->
+                    <td>
+
+                        {% if school.average_grade is not none %}
+
+                        <strong>
+                            {{ '%.2f'|format(school.average_grade) }}
+                        </strong>
+
+                        <span class="value-unit">
+                            / 10
+                        </span>
+
+                        {% else %}
+
+                        <span class="empty-value">
+                            Sem dados
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- FREQUÊNCIA -->
+                    <td>
+
+                        {% if school.average_attendance is not none %}
+
+                        <strong>
+                            {{ '%.1f'|format(school.average_attendance) }}
+                        </strong>
+
+                        <span class="value-unit">
+                            %
+                        </span>
+
+                        {% else %}
+
+                        <span class="empty-value">
+                            Sem dados
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- AÇÃO -->
+                    <td>
+
+                        <a
+                            class="profile-link"
+                            href="{{ url_for('escola_detalhes', school_id=school.id) }}"
+                        >
+                            Ver detalhes →
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="7"
+                        class="empty-state"
+                    >
+                        Nenhuma escola cadastrada.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     RODAPÉ DA PÁGINA
+====================================================== -->
+<footer class="page-footer">
+
+    <div>
+
+        <strong>
+            Gestão Educacional Inteligente
+        </strong>
+
+        <span>
+            Visão consolidada da Rede Municipal de Educação
+        </span>
+
+    </div>
+
+    <a
+        class="profile-link"
+        href="{{ url_for('dashboard') }}"
+    >
+        Voltar ao Dashboard
+    </a>
+
+</footer>
+
+
 </div>
+
 {% endblock %}

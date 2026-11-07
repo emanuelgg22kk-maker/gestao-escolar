@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastros | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard management-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Gestão de dados</p>
+            <h1>Cadastros</h1>
+            <p class="dashboard-context">Os registros são salvos no banco local do sistema.</p>
+        </div>
+    </header>
+
+    {% if errors %}
+    <div class="form-errors" role="alert">
+        {% for error in errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="management-grid">
+        {% if current_user.role == 'admin' %}
+        <section class="dashboard-section management-card">
+            <h2>Nova escola</h2>
+            <form method="post" action="{{ url_for('cadastros') }}" class="management-form">
+                <input type="hidden" name="action" value="escola">
+                <div class="filter-field">
+                    <label for="school-name">Nome da escola</label>
+                    <input id="school-name" name="name" maxlength="160" required>
+                </div>
+                <div class="filter-field">
+                    <label for="school-city">Cidade</label>
+                    <input id="school-city" name="city" maxlength="100" required>
+                </div>
+                <div class="filter-field">
+                    <label for="school-state">Estado (UF)</label>
+                    <input id="school-state" name="state" maxlength="2" minlength="2" required>
+                </div>
+                <button type="submit">Adicionar escola</button>
+            </form>
+        </section>
+        <section class="dashboard-section management-card">
+            <h2>Nova turma</h2>
+            <p class="data-note">Crie turmas para organizar os alunos e vincular as disciplinas da escola.</p>
+            <form method="post" action="{{ url_for('cadastros') }}" class="management-form">
+                <input type="hidden" name="action" value="turma">
+                <div class="filter-field">
+                    <label for="class-name">Nome da turma</label>
+                    <input id="class-name" name="name" maxlength="80" required>
+                </div>
+                <div class="filter-field">
+                    <label for="class-school">Escola</label>
+                    <select id="class-school" name="school_id" required>
+                        <option value="">Selecione</option>
+                        {% for school in data.schools %}
+                        <option value="{{ school.id }}">{{ school.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label for="class-year">Ano letivo</label>
+                    <input id="class-year" name="school_year" type="number" min="2000" max="2100" required>
+                </div>
+                <div class="filter-field">
+                    <label for="class-shift">Turno</label>
+                    <select id="class-shift" name="shift" required>
+                        <option value="">Selecione</option>
+                        <option value="morning">Manhã</option>
+                        <option value="afternoon">Tarde</option>
+                        <option value="evening">Noite</option>
+                    </select>
+                </div>
+                <button type="submit">Adicionar turma</button>
+            </form>
+        </section>
+        {% endif %}
+
+        {% if current_user.role in ('admin', 'diretor') %}
+        <section class="dashboard-section management-card">
+            <h2>Novo professor</h2>
+            <form method="post" action="{{ url_for('cadastros') }}" class="management-form">
+                <input type="hidden" name="action" value="professor">
+                <div class="filter-field">
+                    <label for="teacher-full-name">Nome completo</label>
+                    <input id="teacher-full-name" name="full_name" maxlength="160" required>
+                </div>
+                <div class="filter-field">
+                    <label for="teacher-email">E-mail</label>
+                    <input id="teacher-email" name="email" type="email" maxlength="160" required>
+                </div>
+                {% if current_user.role == 'admin' %}
+                <div class="filter-field">
+                    <label for="teacher-school">Escola</label>
+                    <select id="teacher-school" name="school_id" required>
+                        <option value="">Selecione</option>
+                        {% for school in data.schools %}
+                        <option value="{{ school.id }}">{{ school.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                <p class="data-note">Escola vinculada: {{ data.schools[0].name }}</p>
+                {% endif %}
+                <button type="submit">Adicionar professor</button>
+            </form>
+        </section>
+        {% endif %}
+
+        <section class="dashboard-section management-card">
+            <h2>Novo aluno</h2>
+            <form method="post" action="{{ url_for('cadastros') }}" class="management-form">
+                <input type="hidden" name="action" value="aluno">
+                <div class="filter-field">
+                    <label for="student-full-name">Nome completo</label>
+                    <input id="student-full-name" name="full_name" maxlength="160" required>
+                </div>
+                <div class="filter-field">
+                    <label for="student-enrollment">Número de matrícula</label>
+                    <input id="student-enrollment" name="enrollment_number" maxlength="60" required>
+                </div>
+                <div class="filter-field">
+                    <label for="student-birth-date">Data de nascimento</label>
+                    <input id="student-birth-date" name="birth_date" type="date">
+                </div>
+                <div class="filter-field">
+                    <label for="student-class">Turma e escola</label>
+                    <select id="student-class" name="class_id" required>
+                        <option value="">Selecione</option>
+                        {% for class in data.classes %}
+                        <option value="{{ class.id }}">{{ class.name }} · {{ class.school_name }} · {{ class.school_year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit">Adicionar aluno</button>
+            </form>
+        </section>
+
+        <section class="dashboard-section management-card">
+            <h2>Disciplina na turma</h2>
+            <p class="data-note">Vincule a disciplina, a turma e o professor responsável.</p>
+            <form method="post" action="{{ url_for('cadastros') }}" class="management-form">
+                <input type="hidden" name="action" value="disciplina">
+                <div class="filter-field">
+                    <label for="subject-name">Nome da disciplina</label>
+                    <input id="subject-name" name="subject_name" maxlength="120" required>
+                </div>
+                <div class="filter-field">
+                    <label for="subject-class">Turma e escola</label>
+                    <select id="subject-class" name="class_id" required>
+                        <option value="">Selecione</option>
+                        {% for class in data.classes %}
+                        <option value="{{ class.id }}">{{ class.name }} · {{ class.school_name }} · {{ class.school_year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if current_user.role == 'professor' %}
+                <p class="data-note">Professor responsável: sua conta</p>
+                {% else %}
+                <div class="filter-field">
+                    <label for="subject-teacher">Professor responsável</label>
+                    <select id="subject-teacher" name="teacher_id" required>
+                        <option value="">Selecione</option>
+                        {% for teacher in data.teachers %}
+                        <option value="{{ teacher.id }}">{{ teacher.full_name }} · {{ teacher.school_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <button type="submit">Adicionar disciplina à turma</button>
+            </form>
+        </section>
+    </div>
+
+    {% if current_user.role == 'admin' %}
+    <section class="dashboard-section management-list">
+        <div class="section-heading"><h2>Escolas cadastradas</h2></div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr><th>Escola</th><th>Cidade</th><th>UF</th><th>Ação</th></tr></thead>
+                <tbody>
+                    {% for school in data.schools %}
+                    <tr>
+                        <td>{{ school.name }}</td><td>{{ school.city }}</td><td>{{ school.state }}</td>
+                        <td><a class="profile-link" href="{{ url_for('editar_cadastro', entity='escola', record_id=school.id) }}">Editar</a></td>
+                    </tr>
+                    {% else %}<tr><td colspan="4" class="empty-state">Nenhuma escola cadastrada.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if current_user.role in ('admin', 'diretor') %}
+    <section class="dashboard-section management-list">
+        <div class="section-heading"><h2>Professores cadastrados</h2></div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr><th>Professor</th><th>E-mail</th><th>Escola</th><th>Ação</th></tr></thead>
+                <tbody>
+                    {% for teacher in data.teachers %}
+                    <tr>
+                        <td>{{ teacher.full_name }}</td><td>{{ teacher.email }}</td><td>{{ teacher.school_name }}</td>
+                        <td><a class="profile-link" href="{{ url_for('editar_cadastro', entity='professor', record_id=teacher.id) }}">Editar</a></td>
+                    </tr>
+                    {% else %}<tr><td colspan="4" class="empty-state">Nenhum professor cadastrado.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="dashboard-section management-list">
+        <div class="section-heading"><h2>Alunos cadastrados</h2></div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr><th>Aluno</th><th>Matrícula</th><th>Escola</th><th>Ação</th></tr></thead>
+                <tbody>
+                    {% for student in data.students %}
+                    <tr>
+                        <td>{{ student.full_name }}</td><td>{{ student.enrollment_number }}</td><td>{{ student.school_name }}</td>
+                        <td><a class="profile-link" href="{{ url_for('editar_cadastro', entity='aluno', record_id=student.id) }}">Editar</a></td>
+                    </tr>
+                    {% else %}<tr><td colspan="4" class="empty-state">Nenhum aluno cadastrado.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="dashboard-section management-list">
+        <div class="section-heading"><h2>Disciplinas cadastradas</h2></div>
+        <div class="table-scroll">
+            <table>
+                <thead><tr><th>Disciplina</th><th>Ação</th></tr></thead>
+                <tbody>
+                    {% for subject in data.subjects %}
+                    <tr>
+                        <td>{{ subject.name }}</td>
+                        <td><a class="profile-link" href="{{ url_for('editar_cadastro', entity='disciplina', record_id=subject.id) }}">Editar</a></td>
+                    </tr>
+                    {% else %}<tr><td colspan="2" class="empty-state">Nenhuma disciplina vinculada.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

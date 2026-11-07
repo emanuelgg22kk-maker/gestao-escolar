@@ -1,96 +1,419 @@
 {% extends "base.html" %}
 
-{% block title %}{{ school.name }} | Gestão Escolar{% endblock %}
+{% block title %}{{ school.name }} | Gestão Educacional{% endblock %}
 
 {% block content %}
+
 <div class="dashboard school-detail-page">
-    <header class="dashboard-header profile-header">
+
+
+<!-- =====================================================
+     CABEÇALHO DA ESCOLA
+====================================================== -->
+<header class="dashboard-header profile-header">
+
+    <div>
+
+        <p class="eyebrow">
+            Unidade escolar
+        </p>
+
+        <h1>
+            {{ school.name }}
+        </h1>
+
+        <p class="profile-meta">
+            {{ school.city }} · {{ school.state }}
+        </p>
+
+    </div>
+
+
+    <div class="profile-navigation">
+
+        <a
+            class="back-link"
+            href="{{ url_for('escolas') }}"
+        >
+            ← Voltar para escolas
+        </a>
+
+        <a
+            class="filter-reset"
+            href="{{ url_for('dashboard') }}"
+        >
+            Dashboard
+        </a>
+
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+     INDICADORES DA ESCOLA
+====================================================== -->
+<section
+    class="summary-grid school-detail-summary"
+    aria-label="Indicadores da escola"
+>
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de alunos
+        </span>
+
+        <p class="summary-value">
+            {{ school.student_count }}
+        </p>
+
+        <p class="metric-description">
+            Estudantes vinculados à unidade
+        </p>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de turmas
+        </span>
+
+        <p class="summary-value">
+            {{ school.class_count }}
+        </p>
+
+        <p class="metric-description">
+            Turmas cadastradas
+        </p>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de professores
+        </span>
+
+        <p class="summary-value">
+            {{ school.teacher_count }}
+        </p>
+
+        <p class="metric-description">
+            Professores vinculados
+        </p>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Média de desempenho
+        </span>
+
+        <p class="summary-value">
+
+            {% if school.average_grade is not none %}
+
+            {{ '%.2f'|format(school.average_grade) }}
+
+            <span class="value-unit">
+                / 10
+            </span>
+
+            {% else %}
+
+            <span class="empty-value">
+                Sem dados
+            </span>
+
+            {% endif %}
+
+        </p>
+
+        <p class="metric-description">
+            Desempenho médio dos estudantes
+        </p>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Frequência média
+        </span>
+
+        <p class="summary-value">
+
+            {% if school.average_attendance is not none %}
+
+            {{ '%.1f'|format(school.average_attendance) }}
+
+            <span class="value-unit">
+                %
+            </span>
+
+            {% else %}
+
+            <span class="empty-value">
+                Sem dados
+            </span>
+
+            {% endif %}
+
+        </p>
+
+        <p class="metric-description">
+            Presença média registrada
+        </p>
+
+    </article>
+
+</section>
+
+
+<!-- =====================================================
+     VISÃO DA UNIDADE
+====================================================== -->
+<section
+    class="dashboard-section school-overview-card"
+    aria-labelledby="school-overview-title"
+>
+
+    <div class="section-heading">
+
         <div>
-            <p class="eyebrow">Detalhes da escola</p>
-            <h1>{{ school.name }}</h1>
-            <p class="profile-meta">Localização: {{ school.city }} · {{ school.state }}</p>
-        </div>
-        <div class="profile-navigation">
-            <a class="back-link" href="{{ url_for('escolas') }}">Voltar para escolas</a>
-            <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
-        </div>
-    </header>
 
-    <section class="summary-grid" aria-label="Indicadores da escola">
-        <article class="summary-card">
-            <h2>Total de alunos</h2>
-            <p class="summary-value">{{ school.student_count }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Total de turmas</h2>
-            <p class="summary-value">{{ school.class_count }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Total de professores</h2>
-            <p class="summary-value">{{ school.teacher_count }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Média de desempenho</h2>
-            <p class="summary-value">
-                {% if school.average_grade is not none %}
-                {{ '%.2f'|format(school.average_grade) }}<span class="value-unit">/ 10</span>
-                {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+            <p class="eyebrow">
+                Visão da unidade
             </p>
-        </article>
-        <article class="summary-card">
-            <h2>Frequência média</h2>
-            <p class="summary-value">
-                {% if school.average_attendance is not none %}
-                {{ '%.1f'|format(school.average_attendance) }}<span class="value-unit">%</span>
-                {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+
+            <h2 id="school-overview-title">
+                Informações da escola
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="school-overview-grid">
+
+        <div class="school-overview-item">
+
+            <span class="metric-label">
+                Unidade escolar
+            </span>
+
+            <strong>
+                {{ school.name }}
+            </strong>
+
+        </div>
+
+
+        <div class="school-overview-item">
+
+            <span class="metric-label">
+                Município
+            </span>
+
+            <strong>
+                {{ school.city }}
+            </strong>
+
+        </div>
+
+
+        <div class="school-overview-item">
+
+            <span class="metric-label">
+                Estado
+            </span>
+
+            <strong>
+                {{ school.state }}
+            </strong>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     TURMAS
+====================================================== -->
+<section
+    class="dashboard-section school-classes"
+    aria-labelledby="classes-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Organização escolar
             </p>
-        </article>
-    </section>
 
-    <section class="dashboard-section school-classes" aria-labelledby="classes-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Organização escolar</p>
-                <h2 id="classes-title">Turmas da escola</h2>
-            </div>
-            <p class="results-count">{{ classes|length }} turma(s)</p>
-        </div>
-        <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th scope="col">Turma</th>
-                        <th scope="col">Ano</th>
-                        <th scope="col">Turno</th>
-                        <th scope="col">Quantidade de alunos</th>
-                        <th scope="col">Ação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for class in classes %}
-                    <tr>
-                        <td class="student-name">{{ class.name }}</td>
-                        <td>{{ class.school_year }}</td>
-                        <td>{{ class.shift_label }}</td>
-                        <td>{{ class.student_count }}</td>
-                        <td>
-                            <a class="profile-link" href="{{ url_for('alunos', turma=class.id) }}">
-                                Ver alunos
-                            </a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="empty-state">Nenhuma turma cadastrada para esta escola.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
+            <h2 id="classes-title">
+                Turmas da escola
+            </h2>
 
-    <nav class="profile-bottom-navigation" aria-label="Navegação da escola">
-        <a class="back-link" href="{{ url_for('escolas') }}">Voltar para escolas</a>
-    </nav>
+        </div>
+
+        <p class="results-count">
+            {{ classes|length }} turma(s)
+        </p>
+
+    </div>
+
+
+    <div class="table-scroll">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th scope="col">
+                        Turma
+                    </th>
+
+                    <th scope="col">
+                        Ano
+                    </th>
+
+                    <th scope="col">
+                        Turno
+                    </th>
+
+                    <th scope="col">
+                        Quantidade de alunos
+                    </th>
+
+                    <th scope="col">
+                        Ação
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                {% for class in classes %}
+
+                <tr>
+
+                    <td class="student-name">
+                        {{ class.name }}
+                    </td>
+
+                    <td>
+                        {{ class.school_year }}
+                    </td>
+
+                    <td>
+                        {{ class.shift_label }}
+                    </td>
+
+                    <td>
+                        {{ class.student_count }}
+                    </td>
+
+                    <td>
+
+                        <a
+                            class="profile-link"
+                            href="{{ url_for('alunos', turma=class.id) }}"
+                        >
+                            Ver alunos →
+                        </a>
+
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="empty-state"
+                    >
+                        Nenhuma turma cadastrada para esta escola.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     NAVEGAÇÃO FINAL
+====================================================== -->
+<nav
+    class="profile-bottom-navigation"
+    aria-label="Navegação da escola"
+>
+
+    <a
+        class="back-link"
+        href="{{ url_for('escolas') }}"
+    >
+        ← Voltar para escolas
+    </a>
+
+    <a
+        class="filter-reset"
+        href="{{ url_for('dashboard') }}"
+    >
+        Dashboard
+    </a>
+
+</nav>
+
+
+<!-- =====================================================
+     RODAPÉ DA PÁGINA
+====================================================== -->
+<footer class="page-footer">
+
+    <div>
+
+        <strong>
+            Gestão Educacional Inteligente
+        </strong>
+
+        <span>
+            {{ school.name }}
+        </span>
+
+    </div>
+
+</footer>
+
+
 </div>
+
 {% endblock %}

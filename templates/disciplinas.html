@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Disciplinas | Gestão Escolar{% endblock %}
+
+{% block content %}
+<div class="dashboard subjects-page">
+    <header class="dashboard-header">
+        <div>
+            <p class="eyebrow">Área de aprendizagem</p>
+            <h1>Disciplinas e conteúdos</h1>
+            <p class="dashboard-context">Aulas, arquivos, mensagens e atividades organizados por turma.</p>
+        </div>
+    </header>
+
+    {% for assignment in assignments %}
+    <section class="dashboard-section subject-room" aria-labelledby="subject-{{ assignment.id }}">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">{{ assignment.school_name }} · {{ assignment.class_name }} · {{ assignment.school_year }}</p>
+                <h2 id="subject-{{ assignment.id }}">{{ assignment.subject_name }}</h2>
+                <p class="dashboard-context">Professor: {{ assignment.teacher_name }}</p>
+            </div>
+            <span class="results-count">{{ assignment.materials|length }} conteúdo(s)</span>
+        </div>
+
+        {% if can_upload and assignment.teacher_id == current_user.teacher_id %}
+        <details class="material-compose">
+            <summary>Publicar aula, mensagem ou atividade</summary>
+            <form method="post" enctype="multipart/form-data"
+                action="{{ url_for('enviar_material', assignment_id=assignment.id) }}" class="management-form">
+                <div class="filter-field">
+                    <label for="material-title-{{ assignment.id }}">Título</label>
+                    <input id="material-title-{{ assignment.id }}" name="title" maxlength="180" required>
+                </div>
+                <div class="filter-field">
+                    <label for="material-type-{{ assignment.id }}">Tipo de conteúdo</label>
+                    <select id="material-type-{{ assignment.id }}" name="media_type" required>
+                        <option value="message">Mensagem</option>
+                        <option value="activity">Atividade</option>
+                        <option value="video">Vídeo-aula</option>
+                        <option value="image">Foto ou imagem</option>
+                        <option value="audio">Áudio</option>
+                        <option value="file">Arquivo</option>
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label for="material-description-{{ assignment.id }}">Mensagem ou instruções</label>
+                    <textarea id="material-description-{{ assignment.id }}" name="description" rows="4" maxlength="5000"></textarea>
+                </div>
+                <div class="filter-field">
+                    <label for="material-file-{{ assignment.id }}">Arquivo (até 32 MB)</label>
+                    <input id="material-file-{{ assignment.id }}" name="file" type="file"
+                        accept="video/mp4,video/webm,video/quicktime,image/jpeg,image/png,image/gif,image/webp,audio/mpeg,audio/wav,audio/ogg,audio/mp4,.pdf,.doc,.docx,.ppt,.pptx">
+                </div>
+                <p class="data-note">Mensagens e atividades podem ser publicadas em texto. Vídeos, imagens, áudios e arquivos precisam de anexo.</p>
+                <button type="submit">Publicar para a turma</button>
+            </form>
+        </details>
+        {% endif %}
+
+        <div class="material-list">
+            {% for material in assignment.materials %}
+            <article class="material-card">
+                <div class="material-heading">
+                    <div>
+                        <span class="material-type">{{ {'message': 'Mensagem', 'activity': 'Atividade', 'video': 'Vídeo-aula', 'image': 'Imagem', 'audio': 'Áudio', 'file': 'Arquivo'}[material.media_type] }}</span>
+                        <h3>{{ material.title }}</h3>
+                    </div>
+                    <time>{{ material.created_at }}</time>
+                </div>
+                {% if material.description %}
+                <p class="material-description">{{ material.description }}</p>
+                {% endif %}
+                {% if material.storage_name %}
+                {% set file_url = url_for('baixar_material', material_id=material.id) %}
+                {% if material.media_type == 'video' %}
+                <video class="material-player" controls preload="metadata" src="{{ file_url }}"></video>
+                {% elif material.media_type == 'audio' %}
+                <audio class="material-player" controls preload="metadata" src="{{ file_url }}"></audio>
+                {% elif material.media_type == 'image' %}
+                <a href="{{ file_url }}" target="_blank" rel="noopener">
+                    <img class="material-image" src="{{ file_url }}" alt="{{ material.title }}">
+                </a>
+                {% else %}
+                <a class="profile-link material-download" href="{{ file_url }}">{{ material.original_name or 'Abrir arquivo' }}</a>
+                {% endif %}
+                {% endif %}
+            </article>
+            {% else %}
+            <p class="empty-state">Ainda não há conteúdos nesta disciplina.</p>
+            {% endfor %}
+        </div>
+    </section>
+    {% else %}
+    <section class="dashboard-section">
+        <p class="empty-state">Nenhuma disciplina está vinculada à sua conta.</p>
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}

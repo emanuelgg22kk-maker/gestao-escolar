@@ -1,38 +1,278 @@
 <!doctype html>
+
 <html lang="pt-BR">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Gestão Escolar{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+
+
+<meta charset="utf-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+>
+
+<meta
+    name="description"
+    content="Plataforma de Gestão Educacional Inteligente da Rede Municipal de Educação de Lagoa do Carro."
+>
+
+<title>
+    {% block title %}Gestão Educacional{% endblock %}
+</title>
+
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/style.css') }}"
+>
+
+<script
+    src="{{ url_for('static', filename='js/script.js') }}"
+    defer
+></script>
+
 </head>
 
 <body>
-    {% if session.get('logged_in') %}
-    <header class="app-header">
-        <div class="app-header-inner">
-            <a class="app-brand" href="{{ url_for('dashboard') }}">GESTÃO ESCOLAR</a>
-            <nav class="app-nav" aria-label="Navegação principal">
-                <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('alunos') }}">Alunos</a>
-                <a href="{{ url_for('escolas') }}">Escolas</a>
-                <a href="{{ url_for('turmas') }}">Turmas</a>
-                <a href="{{ url_for('professores') }}">Professores</a>
-                <a href="{{ url_for('frequencia_desempenho') }}">Frequência e Desempenho</a>
-                <a href="{{ url_for('planejamento') }}">Planejamento</a>
-                <a href="{{ url_for('alertas') }}">Alertas</a>
-                <a href="{{ url_for('relatorios') }}">Relatórios</a>
-                <a href="{{ url_for('comunicacao') }}">Comunicação</a>
-            </nav>
-            <a class="app-logout" href="{{ url_for('logout') }}">Sair</a>
+
+{% if session.get('logged_in') %}
+
+<!-- =====================================================
+     CABEÇALHO PRINCIPAL
+====================================================== -->
+<header class="app-header">
+
+    <div class="app-header-inner">
+
+
+        <!-- =================================================
+             MARCA
+        ================================================== -->
+        <a
+            class="app-brand"
+            href="{% if current_user.role in ('aluno', 'responsavel') %}{{ url_for('disciplinas') }}{% else %}{{ url_for('dashboard') }}{% endif %}"
+            aria-label="Página inicial"
+        >
+
+            <span class="app-brand-mark">
+
+                <span class="app-brand-mark__top">
+                    LAGOA DO
+                </span>
+
+                <strong>
+                    CARRO
+                </strong>
+
+                <span class="app-brand-mark__bottom">
+                    PE
+                </span>
+
+            </span>
+
+
+            <span class="app-brand-text">
+
+                <strong>
+                    Gestão Educacional
+                </strong>
+
+                <small>
+                    Rede Municipal de Educação
+                </small>
+
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             NAVEGAÇÃO
+        ================================================== -->
+        <nav
+            class="app-nav"
+            aria-label="Navegação principal"
+        >
+
+            {% if current_user.role in ('admin', 'diretor', 'professor') %}
+            <a
+                href="{{ url_for('dashboard') }}"
+                title="Visão geral da rede"
+            >
+                Dashboard
+            </a>
+
+
+            <a
+                href="{{ url_for('alunos') }}"
+                title="Consulta e acompanhamento de alunos"
+            >
+                Alunos
+            </a>
+            {% endif %}
+
+            {% if current_user.role in ('admin', 'diretor') %}
+            <a
+                href="{{ url_for('escolas') }}"
+                title="Gestão das escolas"
+            >
+                Escolas
+            </a>
+            {% endif %}
+
+            {% if current_user.role in ('admin', 'diretor', 'professor') %}
+            <a
+                href="{{ url_for('turmas') }}"
+                title="Gestão das turmas"
+            >
+                Turmas
+            </a>
+
+
+            <a
+                href="{{ url_for('professores') }}"
+                title="Gestão dos professores"
+            >
+                Professores
+            </a>
+
+
+            <a
+                href="{{ url_for('frequencia_desempenho') }}"
+                title="Frequência e desempenho dos alunos"
+            >
+                Frequência e Desempenho
+            </a>
+
+
+            <a
+                href="{{ url_for('alertas') }}"
+                title="Alertas pedagógicos"
+            >
+                Alertas
+            </a>
+
+
+            <a
+                href="{{ url_for('relatorios') }}"
+                title="Relatórios gerenciais"
+            >
+                Relatórios
+            </a>
+            {% endif %}
+
+            <a
+                href="{{ url_for('comunicacao') }}"
+                title="Comunicação escolar"
+            >
+                Comunicação
+            </a>
+
+            <a href="{{ url_for('disciplinas') }}">Disciplinas</a>
+
+            {% if current_user.role in ('admin', 'diretor', 'professor') %}
+            <a href="{{ url_for('cadastros') }}">Cadastros</a>
+            {% endif %}
+
+            {% if current_user.role == 'admin' %}
+            <a
+                href="{{ url_for('cadastro_contas') }}"
+                title="Gerenciar logins e baixar a lista de perfis"
+            >
+                Cadastro de contas
+            </a>
+            {% endif %}
+
+        </nav>
+
+
+        <!-- =================================================
+             USUÁRIO / SAIR
+        ================================================== -->
+        <div class="app-header-user">
+
+            <div class="app-user-info">
+
+                <span class="app-user-label">
+                    Ambiente institucional
+                </span>
+
+                <strong>
+                    {{ current_user.username }} · {{ current_user.role }}
+                </strong>
+
+            </div>
+
+
+            <a
+                class="app-logout"
+                href="{{ url_for('logout') }}"
+                title="Encerrar sessão"
+            >
+                Sair
+            </a>
+
         </div>
-    </header>
+
+    </div>
+
+</header>
+
+{% endif %}
+
+
+<!-- =====================================================
+     CONTEÚDO PRINCIPAL
+====================================================== -->
+<main>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages" role="status">
+        {% for category, message in messages %}
+        <p class="flash-message flash-message--{{ category }}">{{ message }}</p>
+        {% endfor %}
+    </div>
     {% endif %}
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+</main>
+
+
+<!-- =====================================================
+     RODAPÉ GLOBAL
+====================================================== -->
+{% if session.get('logged_in') %}
+
+<footer class="app-footer">
+
+    <div class="app-footer-inner">
+
+        <div>
+
+            <strong>
+                Gestão Educacional Inteligente
+            </strong>
+
+            <span>
+                Rede Municipal de Educação de Lagoa do Carro
+            </span>
+
+        </div>
+
+        <span>
+            Ambiente institucional
+        </span>
+
+    </div>
+
+</footer>
+
+{% endif %}
+
+
 </body>
 
 </html>

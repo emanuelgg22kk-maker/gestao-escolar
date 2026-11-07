@@ -1,278 +1,986 @@
 {% extends "base.html" %}
 
-{% block title %}Relatórios | Gestão Escolar{% endblock %}
+{% block title %}Relatórios | Gestão Educacional{% endblock %}
 
 {% block content %}
+
 <div class="dashboard reports-page">
-    <header class="dashboard-header">
+
+
+<!-- =====================================================
+     CABEÇALHO
+====================================================== -->
+<header class="dashboard-header">
+
+    <div>
+
+        <p class="eyebrow">
+            Rede Municipal de Educação
+        </p>
+
+        <h1>
+            Relatórios
+        </h1>
+
+        <p class="dashboard-subtitle">
+            Indicadores consolidados de desempenho, frequência
+            e acompanhamento dos estudantes.
+        </p>
+
+    </div>
+
+
+    <div class="profile-navigation">
+
+        <span class="dashboard-status">
+            <span class="status-dot"></span>
+            Indicadores atualizados
+        </span>
+
+        <a
+            class="filter-reset"
+            href="{{ url_for('dashboard') }}"
+        >
+            Dashboard
+        </a>
+
+    </div>
+
+</header>
+
+
+<!-- =====================================================
+     INDICADORES GERAIS
+====================================================== -->
+<section
+    class="summary-grid reports-summary-grid"
+    aria-label="Resumo geral dos indicadores"
+>
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de alunos
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_students }}
+        </p>
+
+        <span class="metric-description">
+            Estudantes considerados no relatório
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Média geral de desempenho
+        </span>
+
+        <p class="summary-value">
+
+            {% if summary.average_grade is not none %}
+
+            {{ '%.2f'|format(summary.average_grade) }}
+
+            <span class="value-unit">
+                / 10
+            </span>
+
+            {% else %}
+
+            <span class="empty-value">
+                Sem dados
+            </span>
+
+            {% endif %}
+
+        </p>
+
+        <span class="metric-description">
+            Média dos registros avaliativos
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Frequência média
+        </span>
+
+        <p class="summary-value">
+
+            {% if summary.average_attendance is not none %}
+
+            {{ '%.1f'|format(summary.average_attendance) }}
+
+            <span class="value-unit">
+                %
+            </span>
+
+            {% else %}
+
+            <span class="empty-value">
+                Sem dados
+            </span>
+
+            {% endif %}
+
+        </p>
+
+        <span class="metric-description">
+            Presença média da rede
+        </span>
+
+    </article>
+
+
+    <article class="summary-card summary-card--attention">
+
+        <span class="metric-label">
+            Em acompanhamento
+        </span>
+
+        <p class="summary-value">
+            {{ summary.attention_students }}
+        </p>
+
+        <span class="metric-description">
+            Estudantes que exigem atenção pedagógica
+        </span>
+
+    </article>
+
+
+    <article class="summary-card">
+
+        <span class="metric-label">
+            Total de alertas
+        </span>
+
+        <p class="summary-value">
+            {{ summary.total_alerts }}
+        </p>
+
+        <span class="metric-description">
+            Alertas registrados no sistema
+        </span>
+
+    </article>
+
+</section>
+
+
+<!-- =====================================================
+     FILTROS
+====================================================== -->
+<section
+    class="dashboard-section report-filter-section"
+    aria-label="Filtros dos relatórios"
+>
+
+    <div class="section-heading">
+
         <div>
-            <p class="eyebrow">Gestão Escolar</p>
-            <h1>Relatórios</h1>
-        </div>
-        <a class="filter-reset" href="{{ url_for('dashboard') }}">Dashboard</a>
-    </header>
 
-    <section class="summary-grid" aria-label="Resumo geral">
-        <article class="summary-card">
-            <h2>Total de alunos</h2>
-            <p class="summary-value">{{ summary.total_students }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Média geral de desempenho</h2>
-            <p class="summary-value">
-                {% if summary.average_grade is not none %}
-                {{ '%.2f'|format(summary.average_grade) }}<span class="value-unit">/ 10</span>
-                {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+            <p class="eyebrow">
+                Consulta dos indicadores
             </p>
-        </article>
-        <article class="summary-card">
-            <h2>Frequência média</h2>
-            <p class="summary-value">
-                {% if summary.average_attendance is not none %}
-                {{ '%.1f'|format(summary.average_attendance) }}<span class="value-unit">%</span>
-                {% else %}<span class="empty-value">Sem dados</span>{% endif %}
+
+            <h2>
+                Filtrar relatório
+            </h2>
+
+        </div>
+
+        <p class="section-description">
+            Analise os indicadores por escola ou turma.
+        </p>
+
+    </div>
+
+
+    <form
+        class="student-filters report-filters"
+        method="get"
+        action="{{ url_for('relatorios') }}"
+    >
+
+        <div class="filter-field">
+
+            <label for="report-school-filter">
+                Escola
+            </label>
+
+            <select
+                id="report-school-filter"
+                name="escola"
+            >
+
+                <option value="">
+                    Todas as escolas
+                </option>
+
+                {% for school in schools %}
+
+                <option
+                    value="{{ school.id }}"
+                    {% if filters.school_id == school.id|string %}selected{% endif %}
+                >
+                    {{ school.name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-field">
+
+            <label for="report-class-filter">
+                Turma
+            </label>
+
+            <select
+                id="report-class-filter"
+                name="turma"
+            >
+
+                <option value="">
+                    Todas as turmas
+                </option>
+
+                {% for class in classes %}
+
+                <option
+                    value="{{ class.id }}"
+                    {% if filters.class_id == class.id|string %}selected{% endif %}
+                >
+                    {{ class.name }} · {{ class.school_name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="filter-actions">
+
+            <button type="submit">
+                Filtrar relatório
+            </button>
+
+            <a
+                class="filter-reset"
+                href="{{ url_for('relatorios') }}"
+            >
+                Limpar filtros
+            </a>
+
+        </div>
+
+    </form>
+
+</section>
+
+
+<!-- =====================================================
+     DESEMPENHO
+====================================================== -->
+<section
+    class="dashboard-section report-section"
+    aria-labelledby="performance-report-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Indicadores acadêmicos
             </p>
-        </article>
-        <article class="summary-card summary-card--attention">
-            <h2>Em acompanhamento</h2>
-            <p class="summary-value">{{ summary.attention_students }}</p>
-        </article>
-        <article class="summary-card">
-            <h2>Total de alertas</h2>
-            <p class="summary-value">{{ summary.total_alerts }}</p>
-        </article>
-    </section>
 
-    <section class="dashboard-section" aria-label="Filtros dos relatórios">
-        <form class="student-filters report-filters" method="get" action="{{ url_for('relatorios') }}">
-            <div class="filter-field">
-                <label for="report-school-filter">Escola</label>
-                <select id="report-school-filter" name="escola">
-                    <option value="">Todas as escolas</option>
-                    {% for school in schools %}
-                    <option value="{{ school.id }}" {% if filters.school_id==school.id|string %}selected{% endif %}>
-                        {{ school.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="filter-field">
-                <label for="report-class-filter">Turma</label>
-                <select id="report-class-filter" name="turma">
-                    <option value="">Todas as turmas</option>
-                    {% for class in classes %}
-                    <option value="{{ class.id }}" {% if filters.class_id==class.id|string %}selected{% endif %}>
-                        {{ class.name }} · {{ class.school_name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="filter-actions">
-                <button type="submit">Filtrar</button>
-                <a class="filter-reset" href="{{ url_for('relatorios') }}">Limpar</a>
-            </div>
-        </form>
-    </section>
+            <h2 id="performance-report-title">
+                Desempenho
+            </h2>
 
-    <section class="dashboard-section report-section" aria-labelledby="performance-report-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Notas</p>
-                <h2 id="performance-report-title">Desempenho</h2>
-            </div>
-        </div>
-        <div class="report-status-grid">
-            <article class="report-status-card report-status-card--attention">
-                <span>Alunos em acompanhamento</span>
-                <strong>{{ summary.attention_students }}</strong>
-            </article>
-            <article class="report-status-card report-status-card--regular">
-                <span>Alunos regulares</span>
-                <strong>{{ summary.regular_students }}</strong>
-            </article>
         </div>
 
-        <div class="report-tables-grid">
-            <div class="report-table-block">
-                <h3>Distribuição por escola</h3>
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th scope="col">Escola</th>
-                                <th scope="col">Alunos</th>
-                                <th scope="col">Média</th>
-                                <th scope="col">Acompanhamento</th>
-                                <th scope="col">Regulares</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for school in school_reports %}
-                            <tr>
-                                <td class="student-name">{{ school.school_name }}</td>
-                                <td>{{ school.student_count }}</td>
-                                <td>
-                                    {% if school.average_grade is not none %}
-                                    {{ '%.2f'|format(school.average_grade) }} / 10
-                                    {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-                                </td>
-                                <td>{{ school.attention_students }}</td>
-                                <td>{{ school.regular_students }}</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="5" class="empty-state">Sem dados de desempenho para este filtro.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <p class="section-description">
+            Distribuição dos estudantes segundo os indicadores de desempenho.
+        </p>
+
+    </div>
+
+
+    <div class="report-status-grid">
+
+        <article class="report-status-card report-status-card--attention">
+
+            <span>
+                Alunos em acompanhamento
+            </span>
+
+            <strong>
+                {{ summary.attention_students }}
+            </strong>
+
+        </article>
+
+
+        <article class="report-status-card report-status-card--regular">
+
+            <span>
+                Alunos regulares
+            </span>
+
+            <strong>
+                {{ summary.regular_students }}
+            </strong>
+
+        </article>
+
+    </div>
+
+
+    <div class="report-tables-grid">
+
+        <!-- Por escola -->
+        <div class="report-table-block">
+
+            <div class="report-table-heading">
+
+                <div>
+
+                    <span class="metric-label">
+                        Visão da rede
+                    </span>
+
+                    <h3>
+                        Distribuição por escola
+                    </h3>
+
                 </div>
+
             </div>
 
-            <div class="report-table-block">
-                <h3>Distribuição por turma</h3>
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th scope="col">Escola</th>
-                                <th scope="col">Turma</th>
-                                <th scope="col">Alunos</th>
-                                <th scope="col">Média</th>
-                                <th scope="col">Acompanhamento</th>
-                                <th scope="col">Regulares</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for class in class_reports %}
-                            <tr>
-                                <td>{{ class.school_name }}</td>
-                                <td class="student-name">{{ class.class_name }} · {{ class.school_year }}</td>
-                                <td>{{ class.student_count }}</td>
-                                <td>
-                                    {% if class.average_grade is not none %}
-                                    {{ '%.2f'|format(class.average_grade) }} / 10
-                                    {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-                                </td>
-                                <td>{{ class.attention_students }}</td>
-                                <td>{{ class.regular_students }}</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="6" class="empty-state">Sem dados de desempenho para este filtro.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+
+            <div class="table-scroll">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th scope="col">
+                                Escola
+                            </th>
+
+                            <th scope="col">
+                                Alunos
+                            </th>
+
+                            <th scope="col">
+                                Média
+                            </th>
+
+                            <th scope="col">
+                                Acompanhamento
+                            </th>
+
+                            <th scope="col">
+                                Regulares
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for school in school_reports %}
+
+                        <tr>
+
+                            <td class="student-name">
+                                {{ school.school_name }}
+                            </td>
+
+                            <td>
+                                {{ school.student_count }}
+                            </td>
+
+                            <td>
+
+                                {% if school.average_grade is not none %}
+
+                                {{ '%.2f'|format(school.average_grade) }} / 10
+
+                                {% else %}
+
+                                <span class="empty-value">
+                                    Sem dados
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ school.attention_students }}
+                            </td>
+
+                            <td>
+                                {{ school.regular_students }}
+                            </td>
+
+                        </tr>
+
+
+                        {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="empty-state"
+                            >
+                                Sem dados de desempenho para este filtro.
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- Por turma -->
+        <div class="report-table-block">
+
+            <div class="report-table-heading">
+
+                <div>
+
+                    <span class="metric-label">
+                        Visão das turmas
+                    </span>
+
+                    <h3>
+                        Distribuição por turma
+                    </h3>
+
                 </div>
-            </div>
-        </div>
-    </section>
 
-    <section class="dashboard-section report-section" aria-labelledby="attendance-report-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Presenças e faltas</p>
-                <h2 id="attendance-report-title">Frequência</h2>
             </div>
-            <p class="attendance-percentage">{{ summary.low_attendance_students }} aluno(s) abaixo de 75%</p>
+
+
+            <div class="table-scroll">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th scope="col">
+                                Escola
+                            </th>
+
+                            <th scope="col">
+                                Turma
+                            </th>
+
+                            <th scope="col">
+                                Alunos
+                            </th>
+
+                            <th scope="col">
+                                Média
+                            </th>
+
+                            <th scope="col">
+                                Acompanhamento
+                            </th>
+
+                            <th scope="col">
+                                Regulares
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for class in class_reports %}
+
+                        <tr>
+
+                            <td>
+                                {{ class.school_name }}
+                            </td>
+
+                            <td class="student-name">
+                                {{ class.class_name }} · {{ class.school_year }}
+                            </td>
+
+                            <td>
+                                {{ class.student_count }}
+                            </td>
+
+                            <td>
+
+                                {% if class.average_grade is not none %}
+
+                                {{ '%.2f'|format(class.average_grade) }} / 10
+
+                                {% else %}
+
+                                <span class="empty-value">
+                                    Sem dados
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ class.attention_students }}
+                            </td>
+
+                            <td>
+                                {{ class.regular_students }}
+                            </td>
+
+                        </tr>
+
+
+                        {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="6"
+                                class="empty-state"
+                            >
+                                Sem dados de desempenho para este filtro.
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
         </div>
-        <div class="report-tables-grid">
-            <div class="report-table-block">
-                <h3>Frequência média por escola</h3>
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th scope="col">Escola</th>
-                                <th scope="col">Frequência média</th>
-                                <th scope="col">Alunos abaixo de 75%</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for school in school_reports %}
-                            <tr>
-                                <td class="student-name">{{ school.school_name }}</td>
-                                <td>
-                                    {% if school.average_attendance is not none %}
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     FREQUÊNCIA
+====================================================== -->
+<section
+    class="dashboard-section report-section"
+    aria-labelledby="attendance-report-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Presenças e faltas
+            </p>
+
+            <h2 id="attendance-report-title">
+                Frequência
+            </h2>
+
+        </div>
+
+
+        <div class="report-highlight">
+
+            <strong>
+                {{ summary.low_attendance_students }}
+            </strong>
+
+            <span>
+                aluno(s) abaixo de 75%
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="report-tables-grid">
+
+        <!-- Frequência por escola -->
+        <div class="report-table-block">
+
+            <div class="report-table-heading">
+
+                <div>
+
+                    <span class="metric-label">
+                        Frequência da rede
+                    </span>
+
+                    <h3>
+                        Frequência média por escola
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-scroll">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th scope="col">
+                                Escola
+                            </th>
+
+                            <th scope="col">
+                                Frequência média
+                            </th>
+
+                            <th scope="col">
+                                Abaixo de 75%
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for school in school_reports %}
+
+                        <tr>
+
+                            <td class="student-name">
+                                {{ school.school_name }}
+                            </td>
+
+                            <td>
+
+                                {% if school.average_attendance is not none %}
+
+                                <strong>
                                     {{ '%.1f'|format(school.average_attendance) }}%
-                                    {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-                                </td>
-                                <td>{{ school.low_attendance_students }}</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="3" class="empty-state">Sem dados de frequência para este filtro.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                </strong>
+
+                                {% else %}
+
+                                <span class="empty-value">
+                                    Sem dados
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ school.low_attendance_students }}
+                            </td>
+
+                        </tr>
+
+
+                        {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="3"
+                                class="empty-state"
+                            >
+                                Sem dados de frequência para este filtro.
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
             </div>
 
-            <div class="report-table-block">
-                <h3>Frequência média por turma</h3>
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th scope="col">Turma</th>
-                                <th scope="col">Escola</th>
-                                <th scope="col">Frequência média</th>
-                                <th scope="col">Alunos abaixo de 75%</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for class in class_reports %}
-                            <tr>
-                                <td class="student-name">{{ class.class_name }} · {{ class.school_year }}</td>
-                                <td>{{ class.school_name }}</td>
-                                <td>
-                                    {% if class.average_attendance is not none %}
+        </div>
+
+
+        <!-- Frequência por turma -->
+        <div class="report-table-block">
+
+            <div class="report-table-heading">
+
+                <div>
+
+                    <span class="metric-label">
+                        Frequência das turmas
+                    </span>
+
+                    <h3>
+                        Frequência média por turma
+                    </h3>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-scroll">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th scope="col">
+                                Turma
+                            </th>
+
+                            <th scope="col">
+                                Escola
+                            </th>
+
+                            <th scope="col">
+                                Frequência média
+                            </th>
+
+                            <th scope="col">
+                                Abaixo de 75%
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for class in class_reports %}
+
+                        <tr>
+
+                            <td class="student-name">
+                                {{ class.class_name }} · {{ class.school_year }}
+                            </td>
+
+                            <td>
+                                {{ class.school_name }}
+                            </td>
+
+                            <td>
+
+                                {% if class.average_attendance is not none %}
+
+                                <strong>
                                     {{ '%.1f'|format(class.average_attendance) }}%
-                                    {% else %}<span class="empty-value">Sem dados</span>{% endif %}
-                                </td>
-                                <td>{{ class.low_attendance_students }}</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="4" class="empty-state">Sem dados de frequência para este filtro.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <p class="data-note">Presenças e atrasos contam como comparecimento; ausências justificadas permanecem no total
-            de registros.</p>
-    </section>
+                                </strong>
 
-    <section class="dashboard-section report-section" aria-labelledby="followup-report-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Regras de acompanhamento</p>
-                <h2 id="followup-report-title">Acompanhamento</h2>
+                                {% else %}
+
+                                <span class="empty-value">
+                                    Sem dados
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ class.low_attendance_students }}
+                            </td>
+
+                        </tr>
+
+
+                        {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="4"
+                                class="empty-state"
+                            >
+                                Sem dados de frequência para este filtro.
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
             </div>
+
         </div>
-        <div class="report-status-grid report-followup-grid">
-            <article class="report-status-card report-status-card--regular">
-                <span>Alunos regulares</span>
-                <strong>{{ summary.regular_students }}</strong>
-            </article>
-            <article class="report-status-card report-status-card--frequency">
-                <span>Somente frequência baixa</span>
-                <strong>{{ summary.frequency_only_students }}</strong>
-            </article>
-            <article class="report-status-card report-status-card--performance">
-                <span>Somente desempenho baixo</span>
-                <strong>{{ summary.performance_only_students }}</strong>
-            </article>
-            <article class="report-status-card report-status-card--both">
-                <span>Frequência e desempenho</span>
-                <strong>{{ summary.both_issue_students }}</strong>
-            </article>
+
+    </div>
+
+
+    <div class="data-note">
+
+        <strong>
+            Critério do indicador:
+        </strong>
+
+        presenças e atrasos contam como comparecimento;
+        ausências justificadas permanecem no total de registros.
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     ACOMPANHAMENTO
+====================================================== -->
+<section
+    class="dashboard-section report-section"
+    aria-labelledby="followup-report-title"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                Regras de acompanhamento
+            </p>
+
+            <h2 id="followup-report-title">
+                Acompanhamento pedagógico
+            </h2>
+
         </div>
-    </section>
+
+        <p class="section-description">
+            Distribuição dos estudantes conforme os critérios atuais de acompanhamento.
+        </p>
+
+    </div>
+
+
+    <div class="report-status-grid report-followup-grid">
+
+        <article class="report-status-card report-status-card--regular">
+
+            <span>
+                Alunos regulares
+            </span>
+
+            <strong>
+                {{ summary.regular_students }}
+            </strong>
+
+        </article>
+
+
+        <article class="report-status-card report-status-card--frequency">
+
+            <span>
+                Somente frequência baixa
+            </span>
+
+            <strong>
+                {{ summary.frequency_only_students }}
+            </strong>
+
+        </article>
+
+
+        <article class="report-status-card report-status-card--performance">
+
+            <span>
+                Somente desempenho baixo
+            </span>
+
+            <strong>
+                {{ summary.performance_only_students }}
+            </strong>
+
+        </article>
+
+
+        <article class="report-status-card report-status-card--both">
+
+            <span>
+                Frequência e desempenho
+            </span>
+
+            <strong>
+                {{ summary.both_issue_students }}
+            </strong>
+
+        </article>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     RODAPÉ
+====================================================== -->
+<footer class="page-footer">
+
+    <div>
+
+        <strong>
+            Gestão Educacional Inteligente
+        </strong>
+
+        <span>
+            Relatórios da Rede Municipal de Educação de Lagoa do Carro
+        </span>
+
+    </div>
+
+</footer>
+
+
 </div>
+
 {% endblock %}
