@@ -1,5 +1,5 @@
 LOGINS CADASTRADOS - GESTAO ESCOLAR
-Atualizado em: 2026-11-07T14:55:22-03:00
+Atualizado em: 2026-11-18T12:39:38-03:00
 Este arquivo lista usuarios e perfis. Senhas nao sao exibidas.
 
 Usuario | Tipo de usuario
